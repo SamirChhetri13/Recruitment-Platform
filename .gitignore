@@ -17,3 +17,7 @@ logs/
 
 # macOS
 .DS_Store
+
+# Postman
+postman_collection.json
+*postman_collection.json

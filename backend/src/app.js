@@ -2,6 +2,7 @@ import express from "express";
 
 import jobRoutes from "./routes/job.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import { applicationsRouter } from "./routes/application.routes.js";
 
 import {
     errorHandler,
@@ -15,6 +16,7 @@ app.use(express.json());
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/jobs", jobRoutes);
+app.use("/api/applications", applicationsRouter);
 
 // Root route
 app.get("/", (req, res) => {
