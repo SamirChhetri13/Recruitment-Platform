@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@layer base {
+  :root {
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  }
+  
+  body {
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  html.dark body {
+    background-color: #0b0f19;
+    color: #f8fafc;
+  }
+
+  html.light body {
+    background-color: #f8fafc;
+    color: #0f172a;
+  }
+}
+
+/* Glassmorphic & Adaptive Design Utilities */
+.glass-panel {
+  background: rgba(17, 24, 39, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+html.light .glass-panel {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+}
+
+.glass-panel-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-panel-hover:hover {
+  background: rgba(17, 24, 39, 0.9);
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 12px 30px -5px rgba(37, 99, 235, 0.2), 0 4px 12px -4px rgba(37, 99, 235, 0.15);
+  transform: translateY(-2px);
+}
+
+html.light .glass-panel-hover:hover {
+  background: #ffffff;
+  border-color: rgba(37, 99, 235, 0.4);
+  box-shadow: 0 12px 30px -5px rgba(37, 99, 235, 0.12), 0 4px 12px -4px rgba(15, 23, 42, 0.04);
+}
+
+.glass-input {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  transition: all 0.2s ease;
+}
+
+html.light .glass-input {
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  color: #0f172a;
+}
+
+.glass-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+  background: rgba(15, 23, 42, 0.85);
+}
+
+html.light .glass-input:focus {
+  background: #ffffff;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* Professional Palette Gradients */
+.gradient-text {
+  background: linear-gradient(135deg, #38bdf8 0%, #818cf8 50%, #34d399 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+html.light .gradient-text {
+  background: linear-gradient(135deg, #0284c7 0%, #4338ca 50%, #059669 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-bg-primary {
+  background: linear-gradient(135deg, #2563eb 0%, #4f46e5 50%, #0d9488 100%);
+}
+
+.gradient-bg-primary:hover {
+  background: linear-gradient(135deg, #1d4ed8 0%, #4338ca 50%, #0f766e 100%);
+}
+
+.gradient-bg-accent {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
+}
+
+/* Theme Adaptive Colors & Surfaces */
+.app-bg {
+  @apply bg-[#0b0f19] text-slate-100 transition-colors duration-300;
+}
+html.light .app-bg {
+  @apply bg-slate-50 text-slate-900;
+}
+
+.app-surface {
+  @apply bg-slate-900/90 border-slate-800 text-slate-100;
+}
+html.light .app-surface {
+  @apply bg-white border-slate-200 text-slate-900 shadow-sm;
+}
+
+.app-card {
+  @apply bg-slate-900/80 border-slate-800/80 text-slate-100;
+}
+html.light .app-card {
+  @apply bg-white border-slate-200/90 text-slate-900 shadow-sm;
+}
+
+.app-text-muted {
+  @apply text-slate-400;
+}
+html.light .app-text-muted {
+  @apply text-slate-600;
+}
+
+.app-border {
+  @apply border-slate-800;
+}
+html.light .app-border {
+  @apply border-slate-200;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0f19;
+}
+
+html.light ::-webkit-scrollbar-track {
+  background: #f1f5f9;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+html.light ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
+

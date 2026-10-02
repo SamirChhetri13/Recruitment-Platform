@@ -20,6 +20,18 @@ const userSchema = new mongoose.Schema(
             minlength: 6,
             select: false,
         },
+        avatar: {
+            type: String,
+            default: "",
+        },
+        resetPasswordToken: {
+            type: String,
+            default: null,
+        },
+        resetPasswordExpires: {
+            type: Date,
+            default: null,
+        },
         role: {
             type: String,
             enum: ["candidate", "recruiter", "admin"],

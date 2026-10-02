@@ -3,14 +3,17 @@ import User from "../models/user.model.js";
 
 export const protect = async (req, res, next) => {
     try {
-        const authHeader = req.headers.authorization;
+        let token = req.cookies?.token;
 
-        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        if (!token && req.headers.authorization && req.headers.authorization.startsWith("Bearer ")) {
+            token = req.headers.authorization.split(" ")[1];
+        }
+
+        if (!token || token === "none") {
             return res.status(401).json({ success: false, message: "Authentication required" });
         }
 
-        const token = authHeader.split(" ")[1];
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "fallback_secret");
         const user = await User.findById(decoded.userId).select("-password");
 
         if (!user) {

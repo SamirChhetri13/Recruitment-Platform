@@ -1,5 +1,6 @@
 import Job from "../models/job.model.js";
 import Application from "../models/application.model.js";
+import SavedJob from "../models/savedJob.model.js";
 
 // Create a job (recruiter/admin only)
 export const createJob = async (req, res, next) => {
@@ -100,6 +101,7 @@ export const deleteJob = async (req, res, next) => {
 
         await job.deleteOne();
         await Application.deleteMany({ job: job._id }); // clean up related applications
+        await SavedJob.deleteMany({ job: job._id });
 
         return res.status(200).json({ success: true, message: "Job deleted successfully" });
     } catch (error) {
@@ -111,6 +113,42 @@ export const deleteJob = async (req, res, next) => {
 export const getMyJobs = async (req, res, next) => {
     try {
         const jobs = await Job.find({ postedBy: req.user._id }).sort({ createdAt: -1 });
+        return res.status(200).json({ success: true, data: { jobs } });
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Toggle or save a bookmarked job
+export const toggleBookmark = async (req, res, next) => {
+    try {
+        const jobId = req.params.id;
+        const candidateId = req.user._id;
+
+        const existing = await SavedJob.findOne({ candidate: candidateId, job: jobId });
+        if (existing) {
+            await existing.deleteOne();
+            return res.status(200).json({ success: true, isBookmarked: false, message: "Bookmark removed" });
+        } else {
+            await SavedJob.create({ candidate: candidateId, job: jobId });
+            return res.status(200).json({ success: true, isBookmarked: true, message: "Job saved to bookmarks" });
+        }
+    } catch (error) {
+        next(error);
+    }
+};
+
+// Get candidate's saved jobs
+export const getSavedJobs = async (req, res, next) => {
+    try {
+        const saved = await SavedJob.find({ candidate: req.user._id })
+            .populate({
+                path: "job",
+                populate: { path: "postedBy", select: "name email" }
+            })
+            .sort({ createdAt: -1 });
+
+        const jobs = saved.map((s) => s.job).filter(Boolean);
         return res.status(200).json({ success: true, data: { jobs } });
     } catch (error) {
         next(error);

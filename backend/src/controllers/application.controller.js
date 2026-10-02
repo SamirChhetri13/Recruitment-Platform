@@ -1,5 +1,23 @@
 import Application from "../models/application.model.js";
 import Job from "../models/job.model.js";
+import { handleResumeUpload } from "../middleware/upload.middleware.js";
+
+// Upload candidate resume file
+export const uploadResume = async (req, res, next) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: "Please upload a resume file (PDF, DOC, or DOCX, max 5MB)" });
+        }
+        const resumeUrl = await handleResumeUpload(req, req.file);
+        return res.status(200).json({
+            success: true,
+            message: "Resume uploaded successfully",
+            data: { resumeUrl, fileName: req.file.originalname }
+        });
+    } catch (error) {
+        next(error);
+    }
+};
 
 // Candidate applies to a job
 export const applyToJob = async (req, res, next) => {

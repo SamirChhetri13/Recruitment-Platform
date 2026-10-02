@@ -6,7 +6,9 @@ import {
     getApplicationsForJob,
     updateApplicationStatus,
     withdrawApplication,
+    uploadResume,
 } from "../controllers/application.controller.js";
+import { uploadResumeMulter } from "../middleware/upload.middleware.js";
 
 import {
     applyJobValidation,
@@ -46,6 +48,15 @@ jobApplicationsRouter.get(
 
 // Standalone router, mounted at /api/applications
 const applicationsRouter = express.Router();
+
+// POST /api/applications/upload-resume - Upload resume file (PDF/DOC/DOCX, <5MB)
+applicationsRouter.post(
+    "/upload-resume",
+    protect,
+    authorize("candidate"),
+    uploadResumeMulter.single("resume"),
+    uploadResume
+);
 
 // GET /api/applications/me - Candidate's own applications
 applicationsRouter.get(
