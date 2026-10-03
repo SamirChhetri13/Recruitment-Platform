@@ -25,8 +25,8 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950">
-        <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-[var(--bg)]">
+        <div className="w-8 h-8 border-4 border-[var(--primary)]/30 border-t-[var(--primary)] rounded-full animate-spin" />
       </div>
     );
   }
@@ -38,8 +38,8 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   if (allowedRoles && !allowedRoles.includes(user?.role)) {
     return (
       <div className="p-12 text-center space-y-4">
-        <h2 className="text-xl font-bold text-rose-400">Access Denied</h2>
-        <p className="text-xs text-slate-400">
+        <h2 className="text-xl font-bold text-[var(--danger)]">Access Denied</h2>
+        <p className="text-xs text-[var(--text-subtle)]">
           You do not have permission to access this portal section ({user?.role} account).
         </p>
       </div>
@@ -57,9 +57,9 @@ export function App() {
         toastOptions={{
           duration: 3500,
           style: {
-            background: '#0f172a',
-            color: '#f8fafc',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            background: 'var(--bg-elevated)',
+            color: 'var(--text)',
+            border: '1px solid var(--border)',
             borderRadius: '12px',
             fontSize: '12px',
           },

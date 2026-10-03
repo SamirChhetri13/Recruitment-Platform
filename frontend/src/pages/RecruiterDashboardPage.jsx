@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { 
   Layers, PlusCircle, Users, CheckCircle2, Briefcase, Eye, Edit3, Trash2, 
-  ToggleLeft, ToggleRight, LayoutGrid, Table as TableIcon, RefreshCw, Copy, Sparkles, TrendingUp, PieChart as PieIcon
+  ToggleLeft, ToggleRight, LayoutGrid, Table as TableIcon, RefreshCw, Copy, Sparkles, TrendingUp, PieChart as PieIcon, ArrowUpRight, AlertCircle
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -13,7 +13,7 @@ import {
   Bar,
   XAxis,
   YAxis,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   CartesianGrid,
   Cell,
 } from 'recharts';
@@ -23,8 +23,7 @@ import { JobWizardModal } from '../components/recruiter/JobWizardModal';
 import { ApplicantDrawer } from '../components/recruiter/ApplicantDrawer';
 import { ApplicantTable } from '../components/recruiter/ApplicantTable';
 import { ApplicantKanban } from '../components/recruiter/ApplicantKanban';
-import { Badge } from '../components/common/Badge';
-import { StatCardSkeleton } from '../components/common/Skeleton';
+import { Button, Card, Badge, Tabs, EmptyState, Modal, StatCardSkeleton } from '../components/ui';
 import { toast } from 'react-hot-toast';
 
 export const RecruiterDashboardPage = () => {
@@ -41,6 +40,7 @@ export const RecruiterDashboardPage = () => {
   const [isWizardModalOpen, setIsWizardModalOpen] = useState(false);
   const [jobToEdit, setJobToEdit] = useState(null);
   const [selectedCandidateApp, setSelectedCandidateApp] = useState(null);
+  const [jobToDelete, setJobToDelete] = useState(null);
 
   const fetchRecruiterJobs = async () => {
     try {
@@ -88,8 +88,9 @@ export const RecruiterDashboardPage = () => {
       if (selectedJob?._id === job._id) {
         setSelectedJob((prev) => ({ ...prev, status: newStatus }));
       }
+      toast.success(`Job marked as ${newStatus}`);
     } catch (err) {
-      // Toast shown by interceptor
+      // Toast handled by interceptor
     }
   };
 
@@ -111,19 +112,18 @@ export const RecruiterDashboardPage = () => {
       toast.success('Job vacancy cloned successfully!');
       fetchRecruiterJobs();
     } catch (err) {
-      // Toast shown by interceptor
+      // Toast handled by interceptor
     }
   };
 
-  const handleDeleteJob = async (jobId) => {
-    if (!window.confirm('Are you sure you want to delete this vacancy and all associated applications?')) {
-      return;
-    }
+  const confirmDeleteJob = async () => {
+    if (!jobToDelete) return;
     try {
-      await deleteJob(jobId);
-      const remaining = jobs.filter((j) => j._id !== jobId);
+      await deleteJob(jobToDelete._id);
+      toast.success('Vacancy deleted');
+      const remaining = jobs.filter((j) => j._id !== jobToDelete._id);
       setJobs(remaining);
-      if (selectedJob?._id === jobId) {
+      if (selectedJob?._id === jobToDelete._id) {
         if (remaining.length > 0) {
           handleSelectJobForATS(remaining[0]);
         } else {
@@ -131,8 +131,9 @@ export const RecruiterDashboardPage = () => {
           setApplications([]);
         }
       }
+      setJobToDelete(null);
     } catch (err) {
-      // Toast shown by interceptor
+      // Toast handled by interceptor
     }
   };
 
@@ -143,7 +144,7 @@ export const RecruiterDashboardPage = () => {
         prev.map((app) => (app._id === applicationId ? { ...app, status: newStatus } : app))
       );
     } catch (err) {
-      // Toast shown by interceptor
+      // Toast handled by interceptor
     }
   };
 
@@ -155,10 +156,10 @@ export const RecruiterDashboardPage = () => {
 
   // Recharts Data
   const funnelData = [
-    { name: 'Applied', count: applications.filter((a) => a.status === 'applied').length, fill: '#818cf8' },
-    { name: 'Shortlisted', count: applications.filter((a) => a.status === 'shortlisted').length, fill: '#c084fc' },
-    { name: 'Hired', count: applications.filter((a) => a.status === 'hired').length, fill: '#34d399' },
-    { name: 'Rejected', count: applications.filter((a) => a.status === 'rejected').length, fill: '#f87171' },
+    { name: 'Applied', count: applications.filter((a) => a.status === 'applied').length, fill: '#3B82C4' },
+    { name: 'Shortlisted', count: applications.filter((a) => a.status === 'shortlisted').length, fill: '#F99F25' },
+    { name: 'Hired', count: applications.filter((a) => a.status === 'hired').length, fill: '#1FA67A' },
+    { name: 'Rejected', count: applications.filter((a) => a.status === 'rejected').length, fill: '#E0526A' },
   ];
 
   const timelineMap = {};
@@ -167,18 +168,10 @@ export const RecruiterDashboardPage = () => {
     timelineMap[dateStr] = (timelineMap[dateStr] || 0) + 1;
   });
 
-  const applicationsOverTimeData =
-    Object.keys(timelineMap).length > 0
-      ? Object.keys(timelineMap).map((date) => ({ date, applications: timelineMap[date] }))
-      : [
-          { date: 'Mon', applications: 2 },
-          { date: 'Tue', applications: 5 },
-          { date: 'Wed', applications: 3 },
-          { date: 'Thu', applications: 8 },
-          { date: 'Fri', applications: 12 },
-          { date: 'Sat', applications: 6 },
-          { date: 'Sun', applications: 9 },
-        ];
+  const applicationsOverTimeData = Object.keys(timelineMap).map((date) => ({
+    date,
+    applications: timelineMap[date],
+  }));
 
   return (
     <div className="space-y-8">
@@ -188,133 +181,170 @@ export const RecruiterDashboardPage = () => {
       </Helmet>
       
       {/* Recruiter Header */}
-      <div className="glass-panel p-8 rounded-3xl border border-slate-800 bg-slate-900/80 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="p-8 rounded-3xl bg-white dark:bg-ink-900 border border-ink-100 dark:border-ink-800 shadow-card flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="space-y-1">
-          <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            <Layers className="w-6 h-6 text-indigo-400" />
-            Recruiter Control Center
+          <h1 className="text-2xl font-extrabold text-ink-900 dark:text-white font-display tracking-tight flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-brand-50 dark:bg-brand-950/60 text-brand-600 dark:text-brand-300 flex items-center justify-center">
+              <Layers className="w-5 h-5" />
+            </div>
+            <span>Recruiter Control Center</span>
           </h1>
-          <p className="text-xs text-slate-400">
-            Multi-step wizard publishing, interactive ATS Kanban pipeline, and candidate resume drawers
+          <p className="text-xs text-ink-500 dark:text-ink-400">
+            Publish vacancies, track candidates in real-time Kanban pipelines, and manage hires.
           </p>
         </div>
 
-        <button
+        {/* SINGLE SAFFRON HIGHLIGHT CTA PER VIEWPORT */}
+        <Button
+          variant="accent"
           onClick={() => {
             setJobToEdit(null);
             setIsWizardModalOpen(true);
           }}
-          className="px-5 py-2.5 rounded-xl font-bold text-xs text-white gradient-bg-primary shadow-lg shadow-indigo-500/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 shrink-0 min-h-[44px]"
+          leftIcon={PlusCircle}
         >
-          <PlusCircle className="w-4 h-4" />
-          Job Creation Wizard
-        </button>
+          Post a Job
+        </Button>
       </div>
 
-      {/* Analytics Overview Cards */}
+      {/* Analytics KPI Cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <motion.div whileHover={{ y: -2 }} className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
+        <Card hoverEffect padding="sm" className="space-y-1 cursor-pointer">
+          <div className="flex items-center justify-between text-ink-500 dark:text-ink-400">
             <span className="text-xs font-semibold">Total Vacancies</span>
-            <Briefcase className="w-4 h-4 text-indigo-400" />
+            <div className="p-1.5 rounded-lg bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-300">
+              <Briefcase className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-extrabold text-white">{totalJobs}</p>
-        </motion.div>
+          <p className="text-2xl font-extrabold text-ink-900 dark:text-white font-display">{totalJobs}</p>
+          <p className="text-2xs text-status-hired font-semibold flex items-center gap-0.5">
+            <ArrowUpRight className="w-3 h-3" /> +12% vs last month
+          </p>
+        </Card>
 
-        <motion.div whileHover={{ y: -2 }} className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold">Active Jobs</span>
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <Card hoverEffect padding="sm" className="space-y-1 cursor-pointer">
+          <div className="flex items-center justify-between text-ink-500 dark:text-ink-400">
+            <span className="text-xs font-semibold">Active Openings</span>
+            <div className="p-1.5 rounded-lg bg-status-hired/10 text-status-hired">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-extrabold text-white">{activeJobs}</p>
-        </motion.div>
+          <p className="text-2xl font-extrabold text-ink-900 dark:text-white font-display">{activeJobs}</p>
+          <p className="text-2xs text-ink-400 font-medium">Published & hiring</p>
+        </Card>
 
-        <motion.div whileHover={{ y: -2 }} className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold">Selected Applicants</span>
-            <Users className="w-4 h-4 text-purple-400" />
+        <Card hoverEffect padding="sm" className="space-y-1 cursor-pointer">
+          <div className="flex items-center justify-between text-ink-500 dark:text-ink-400">
+            <span className="text-xs font-semibold">Active Applicants</span>
+            <div className="p-1.5 rounded-lg bg-status-applied/10 text-status-applied">
+              <Users className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-extrabold text-white">{totalApplicants}</p>
-        </motion.div>
+          <p className="text-2xl font-extrabold text-ink-900 dark:text-white font-display">{totalApplicants}</p>
+          <p className="text-2xs text-status-applied font-semibold">In selected pipeline</p>
+        </Card>
 
-        <motion.div whileHover={{ y: -2 }} className="glass-panel p-5 rounded-2xl border border-slate-800 space-y-1">
-          <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold">Hired Candidates</span>
-            <CheckCircle2 className="w-4 h-4 text-amber-400" />
+        <Card hoverEffect padding="sm" className="space-y-1 cursor-pointer">
+          <div className="flex items-center justify-between text-ink-500 dark:text-ink-400">
+            <span className="text-xs font-semibold">Successful Hires</span>
+            <div className="p-1.5 rounded-lg bg-status-shortlisted/10 text-status-shortlisted">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
           </div>
-          <p className="text-2xl font-extrabold text-white">{hiredCount}</p>
-        </motion.div>
+          <p className="text-2xl font-extrabold text-ink-900 dark:text-white font-display">{hiredCount}</p>
+          <p className="text-2xs text-status-hired font-semibold">Hired candidates</p>
+        </Card>
       </div>
 
-      {/* Recharts Analytics Section */}
+      {/* Analytics Charts Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Applications Over Time AreaChart */}
-        <div className="glass-panel p-6 rounded-3xl border border-slate-800 bg-slate-900/60 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-              <TrendingUp className="w-4 h-4 text-indigo-400" />
-              Applications Over Time
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-ink-100 dark:border-ink-800">
+            <h3 className="text-sm font-bold text-ink-900 dark:text-white font-display flex items-center gap-2">
+              <TrendingUp className="w-4 h-4 text-brand-600 dark:text-brand-300" />
+              <span>Applications Over Time</span>
             </h3>
-            <span className="text-[11px] text-slate-400">Recent volume</span>
+            <span className="text-2xs text-ink-400">Real submission volume</span>
           </div>
-          <div className="h-56 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={applicationsOverTimeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="appColor" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.6} />
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0.0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.08)" />
-                <XAxis dataKey="date" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0f172a',
-                    borderColor: '#334155',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                  }}
-                />
-                <Area type="monotone" dataKey="applications" stroke="#6366f1" strokeWidth={2.5} fillOpacity={1} fill="url(#appColor)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+
+          {applicationsOverTimeData.length === 0 ? (
+            <EmptyState
+              icon={TrendingUp}
+              title="No applications recorded yet"
+              description="Share your vacancy link with candidates to start seeing real submission trends here."
+            />
+          ) : (
+            <div className="h-56 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={applicationsOverTimeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="appColor" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#279490" stopOpacity={0.5} />
+                      <stop offset="95%" stopColor="#279490" stopOpacity={0.0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(143,153,171,0.2)" />
+                  <XAxis dataKey="date" stroke="#8F99AB" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#8F99AB" fontSize={11} tickLine={false} />
+                  <RechartsTooltip
+                    contentStyle={{
+                      backgroundColor: '#181C25',
+                      borderColor: '#2A303B',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      color: '#FFFFFF',
+                    }}
+                  />
+                  <Area type="monotone" dataKey="applications" stroke="#279490" strokeWidth={2.5} fillOpacity={1} fill="url(#appColor)" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
 
         {/* Candidate Status Funnel BarChart */}
-        <div className="glass-panel p-6 rounded-3xl border border-slate-800 bg-slate-900/60 space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-            <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-              <PieIcon className="w-4 h-4 text-purple-400" />
-              Candidate Status Funnel
+        <Card className="space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-ink-100 dark:border-ink-800">
+            <h3 className="text-sm font-bold text-ink-900 dark:text-white font-display flex items-center gap-2">
+              <PieIcon className="w-4 h-4 text-sun-500" />
+              <span>Candidate Status Funnel</span>
             </h3>
-            <span className="text-[11px] text-slate-400">Applied → Hired</span>
+            <span className="text-2xs text-ink-400">Applied → Hired</span>
           </div>
-          <div className="h-56 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={funnelData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255, 255, 255, 0.08)" />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: '#0f172a',
-                    borderColor: '#334155',
-                    borderRadius: '12px',
-                    fontSize: '12px',
-                  }}
-                />
-                <Bar dataKey="count" radius={[8, 8, 0, 0]}>
-                  {funnelData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
+
+          {totalApplicants === 0 ? (
+            <EmptyState
+              icon={PieIcon}
+              title="Pipeline is currently empty"
+              description="Select a job with active candidate submissions to inspect funnel conversion counts."
+            />
+          ) : (
+            <div className="h-56 w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={funnelData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(143,153,171,0.2)" />
+                  <XAxis dataKey="name" stroke="#8F99AB" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#8F99AB" fontSize={11} tickLine={false} />
+                  <RechartsTooltip
+                    contentStyle={{
+                      backgroundColor: '#181C25',
+                      borderColor: '#2A303B',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      color: '#FFFFFF',
+                    }}
+                  />
+                  <Bar dataKey="count" radius={[8, 8, 0, 0]}>
+                    {funnelData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          )}
+        </Card>
       </div>
 
       {/* Main Grid: Left Vacancies List, Right ATS Board */}
@@ -322,38 +352,36 @@ export const RecruiterDashboardPage = () => {
         
         {/* Left Col: Recruiter Jobs Management */}
         <div className="space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
-            <h3 className="text-sm font-bold text-slate-200">Posted Job Vacancies</h3>
+          <div className="flex items-center justify-between pb-2 border-b border-ink-100 dark:border-ink-800">
+            <h3 className="text-sm font-bold text-ink-900 dark:text-white font-display">Posted Job Vacancies</h3>
             <button
               onClick={fetchRecruiterJobs}
-              className="p-1 rounded-lg text-slate-400 hover:text-indigo-400 transition-colors"
+              className="p-1.5 rounded-lg text-ink-400 hover:text-brand-600 dark:hover:text-brand-300 transition-colors"
+              title="Refresh jobs"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className="w-4 h-4" />
             </button>
           </div>
 
           {loading ? (
             <div className="space-y-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-20 glass-panel rounded-xl animate-pulse bg-slate-800/40" />
+                <div key={i} className="h-24 rounded-2xl bg-ink-100 dark:bg-ink-800 animate-pulse" />
               ))}
             </div>
           ) : jobs.length === 0 ? (
-            <div className="glass-panel p-8 rounded-2xl border border-slate-800 text-center space-y-3">
-              <Briefcase className="w-8 h-8 text-slate-600 mx-auto" />
-              <p className="text-xs text-slate-400">No job vacancies created yet.</p>
-              <button
-                onClick={() => {
-                  setJobToEdit(null);
-                  setIsWizardModalOpen(true);
-                }}
-                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold text-indigo-400 bg-indigo-500/10 border border-indigo-500/20"
-              >
-                Launch Job Wizard
-              </button>
-            </div>
+            <EmptyState
+              icon={Briefcase}
+              title="No job vacancies yet"
+              description="Create your first job posting to start gathering candidate applications."
+              actionLabel="Create First Job"
+              onAction={() => {
+                setJobToEdit(null);
+                setIsWizardModalOpen(true);
+              }}
+            />
           ) : (
-            <div className="space-y-3 max-h-[700px] overflow-y-auto pr-1">
+            <div className="space-y-3 max-h-[700px] overflow-y-auto pr-1 custom-scrollbar">
               {jobs.map((job) => {
                 const isSelected = selectedJob?._id === job._id;
 
@@ -361,42 +389,43 @@ export const RecruiterDashboardPage = () => {
                   <div
                     key={job._id}
                     onClick={() => handleSelectJobForATS(job)}
-                    className={`glass-panel p-4 rounded-xl border transition-all cursor-pointer space-y-3 ${
-                      isSelected
-                        ? 'border-indigo-500/60 bg-indigo-500/10 shadow-lg shadow-indigo-500/10'
-                        : 'border-slate-800/80 hover:border-slate-700 bg-slate-900/60'
-                    }`}
+                    className={`
+                      p-4 rounded-2xl border transition-all duration-150 cursor-pointer space-y-3
+                      ${isSelected
+                        ? 'border-brand-600 bg-brand-50/60 dark:bg-brand-950/60 dark:border-brand-400 shadow-lift'
+                        : 'border-ink-100 dark:border-ink-800 bg-white dark:bg-ink-900 hover:border-ink-300 dark:hover:border-ink-700 shadow-card'}
+                    `}
                   >
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <h4 className="text-xs font-bold text-slate-100">{job.title}</h4>
-                        <p className="text-[11px] text-slate-400">{job.company} • {job.location}</p>
+                        <h4 className="text-xs font-bold text-ink-900 dark:text-white">{job.title}</h4>
+                        <p className="text-2xs text-ink-500 dark:text-ink-400">{job.company} • {job.location}</p>
                       </div>
-                      <Badge variant={job.status === 'open' ? 'success' : 'default'} className="capitalize shrink-0">
+                      <Badge variant={job.status === 'open' ? 'hired' : 'neutral'} className="capitalize shrink-0">
                         {job.status}
                       </Badge>
                     </div>
 
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 pt-2 border-t border-slate-800/60">
-                      <span className="capitalize">{job.jobType}</span>
+                    <div className="flex items-center justify-between text-2xs text-ink-500 dark:text-ink-400 pt-2 border-t border-ink-100 dark:border-ink-800">
+                      <span className="capitalize font-medium">{job.jobType}</span>
 
                       {/* Action buttons */}
                       <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
                         <button
                           onClick={() => handleToggleJobStatus(job)}
                           title="Toggle Status (Open/Closed)"
-                          className="p-1 rounded text-slate-400 hover:text-indigo-400"
+                          className="p-1 rounded text-ink-400 hover:text-brand-600 dark:hover:text-brand-300"
                         >
                           {job.status === 'open' ? (
-                            <ToggleRight className="w-4 h-4 text-emerald-400" />
+                            <ToggleRight className="w-4 h-4 text-status-hired" />
                           ) : (
-                            <ToggleLeft className="w-4 h-4 text-slate-500" />
+                            <ToggleLeft className="w-4 h-4 text-ink-400" />
                           )}
                         </button>
                         <button
                           onClick={() => handleCloneJob(job)}
                           title="Clone Vacancy"
-                          className="p-1 rounded text-slate-400 hover:text-indigo-400"
+                          className="p-1 rounded text-ink-400 hover:text-brand-600 dark:hover:text-brand-300"
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </button>
@@ -406,14 +435,14 @@ export const RecruiterDashboardPage = () => {
                             setIsWizardModalOpen(true);
                           }}
                           title="Edit Vacancy"
-                          className="p-1 rounded text-slate-400 hover:text-indigo-400"
+                          className="p-1 rounded text-ink-400 hover:text-brand-600 dark:hover:text-brand-300"
                         >
                           <Edit3 className="w-3.5 h-3.5" />
                         </button>
                         <button
-                          onClick={() => handleDeleteJob(job._id)}
+                          onClick={() => setJobToDelete(job)}
                           title="Delete Vacancy"
-                          className="p-1 rounded text-slate-400 hover:text-rose-400"
+                          className="p-1 rounded text-ink-400 hover:text-status-rejected"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -428,52 +457,38 @@ export const RecruiterDashboardPage = () => {
 
         {/* Right Col: Applicant Tracking System (ATS Pipeline) */}
         <div className="lg:col-span-2 space-y-4">
-          <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-ink-100 dark:border-ink-800">
             <div>
-              <h3 className="text-sm font-bold text-slate-100 flex items-center gap-2">
-                <Users className="w-4 h-4 text-indigo-400" />
-                ATS Candidate Pipeline {selectedJob ? `— ${selectedJob.title}` : ''}
+              <h3 className="text-sm font-bold text-ink-900 dark:text-white font-display flex items-center gap-2">
+                <Users className="w-4 h-4 text-brand-600 dark:text-brand-300" />
+                <span>ATS Pipeline {selectedJob ? `— ${selectedJob.title}` : ''}</span>
               </h3>
-              <p className="text-[11px] text-slate-400">
+              <p className="text-2xs text-ink-500 dark:text-ink-400">
                 {applications.length} candidate(s) in active pipeline
               </p>
             </div>
 
-            {/* View Mode Switcher */}
-            <div className="flex items-center gap-1 glass-panel p-1 rounded-xl bg-slate-900">
-              <button
-                onClick={() => setAtsViewMode('kanban')}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                  atsViewMode === 'kanban'
-                    ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5" />
-                Kanban Stage Board
-              </button>
-
-              <button
-                onClick={() => setAtsViewMode('table')}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-semibold transition-all ${
-                  atsViewMode === 'table'
-                    ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
-                    : 'text-slate-400 hover:text-slate-200'
-                }`}
-              >
-                <TableIcon className="w-3.5 h-3.5" />
-                Table View
-              </button>
-            </div>
+            {/* Segmented Control View Toggle */}
+            <Tabs
+              tabs={[
+                { id: 'kanban', label: 'Kanban Board', icon: LayoutGrid },
+                { id: 'table', label: 'Table View', icon: TableIcon },
+              ]}
+              activeTab={atsViewMode}
+              onChange={setAtsViewMode}
+              variant="segmented"
+            />
           </div>
 
           {/* ATS Pipeline view */}
           {loadingApps ? (
-            <div className="h-64 glass-panel rounded-2xl animate-pulse bg-slate-800/40" />
+            <div className="h-64 rounded-2xl bg-ink-100 dark:bg-ink-800 animate-pulse border border-ink-200 dark:border-ink-700" />
           ) : !selectedJob ? (
-            <div className="glass-panel p-12 rounded-2xl border border-slate-800 text-center text-xs text-slate-400">
-              Select a job vacancy on the left to inspect candidate pipeline.
-            </div>
+            <EmptyState
+              icon={Users}
+              title="Select a job vacancy"
+              description="Choose a job posting from the left sidebar to view its candidate pipeline."
+            />
           ) : atsViewMode === 'kanban' ? (
             <ApplicantKanban
               applications={applications}
@@ -489,6 +504,32 @@ export const RecruiterDashboardPage = () => {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        isOpen={Boolean(jobToDelete)}
+        onClose={() => setJobToDelete(null)}
+        title="Confirm Delete Vacancy"
+        subtitle="This action cannot be undone."
+        maxWidth="max-w-md"
+      >
+        <div className="space-y-4">
+          <div className="p-4 rounded-xl bg-status-rejected/10 border border-status-rejected/20 flex items-start gap-3">
+            <AlertCircle className="w-5 h-5 text-status-rejected shrink-0 mt-0.5" />
+            <p className="text-xs text-ink-700 dark:text-ink-200">
+              Are you sure you want to permanently delete <strong>"{jobToDelete?.title}"</strong>? All associated applicant submissions will be removed.
+            </p>
+          </div>
+          <div className="flex items-center justify-end gap-3 pt-2">
+            <Button variant="ghost" onClick={() => setJobToDelete(null)}>
+              Cancel
+            </Button>
+            <Button variant="danger" onClick={confirmDeleteJob}>
+              Delete Vacancy
+            </Button>
+          </div>
+        </div>
+      </Modal>
 
       {/* Modals & Drawers */}
       <JobWizardModal
@@ -515,3 +556,5 @@ export const RecruiterDashboardPage = () => {
     </div>
   );
 };
+
+export default RecruiterDashboardPage;

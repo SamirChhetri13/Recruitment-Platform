@@ -3,27 +3,66 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 const ThemeContext = createContext(null);
 
 export const ThemeProvider = ({ children }) => {
-  const [theme, setTheme] = useState(() => {
-    return localStorage.getItem('theme') || 'dark';
+  const [themeMode, setThemeMode] = useState(() => {
+    try {
+      return localStorage.getItem('theme') || 'system';
+    } catch {
+      return 'system';
+    }
   });
 
+  const [resolvedTheme, setResolvedTheme] = useState('dark');
+
   useEffect(() => {
-    localStorage.setItem('theme', theme);
-    if (theme === 'light') {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
-    } else {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
+    const applyTheme = () => {
+      let isDark = false;
+      if (themeMode === 'system') {
+        isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      } else {
+        isDark = themeMode === 'dark';
+      }
+
+      const active = isDark ? 'dark' : 'light';
+      setResolvedTheme(active);
+
+      const root = document.documentElement;
+      root.classList.remove('light', 'dark');
+      root.classList.add(active);
+      root.setAttribute('data-theme', active);
+      root.style.colorScheme = active;
+
+      const metaThemeColor = document.getElementById('meta-theme-color');
+      if (metaThemeColor) {
+        metaThemeColor.setAttribute('content', isDark ? '#0b0f19' : '#ffffff');
+      }
+
+      try {
+        localStorage.setItem('theme', themeMode);
+      } catch (e) {
+        // Storage restricted or disabled
+      }
+    };
+
+    applyTheme();
+
+    if (themeMode === 'system') {
+      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      const handleChange = () => applyTheme();
+      mediaQuery.addEventListener('change', handleChange);
+      return () => mediaQuery.removeEventListener('change', handleChange);
     }
-  }, [theme]);
+  }, [themeMode]);
+
+  const setTheme = (mode) => {
+    setThemeMode(mode);
+  };
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
+    setThemeMode((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme: resolvedTheme, themeMode, resolvedTheme, setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );
@@ -36,3 +75,4 @@ export const useTheme = () => {
   }
   return context;
 };
+

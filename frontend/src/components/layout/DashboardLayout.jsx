@@ -1,26 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Briefcase, Layers, FileText, PlusCircle, LogOut, ChevronLeft, ChevronRight, 
-  User, Bell, ChevronRight as BreadcrumbSeparator, Home, Menu, X, Settings, Shield, Bookmark
+  Briefcase, Layers, FileText, LogOut, Search,
+  ChevronRight as BreadcrumbSeparator, Home, Menu, X, Settings, Shield, Bookmark, Bell, Command
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Footer } from './Footer';
+import { Sidebar } from './Sidebar';
 import { ThemeToggle } from '../common/ThemeToggle';
+import { Avatar, Dropdown, DropdownItem, DropdownDivider, Modal } from '../ui';
 
 export const DashboardLayout = () => {
   const { user, isRecruiter, isCandidate, isAdmin, logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
 
   const getBreadcrumbTitle = () => {
     if (location.pathname.includes('/recruiter/dashboard')) return 'Recruiter Portal';
@@ -28,396 +41,273 @@ export const DashboardLayout = () => {
     if (location.pathname.includes('/jobs')) return 'Job Openings';
     if (location.pathname.includes('/settings')) return 'Profile Settings';
     if (location.pathname.includes('/admin')) return 'Admin Dashboard';
-    if (location.pathname.includes('/saved-jobs')) return 'Saved Jobs';
+    if (location.pathname.includes('/saved-jobs')) return 'Saved Vacancies';
     return 'Dashboard';
   };
 
   const closeMobileDrawer = () => setMobileDrawerOpen(false);
 
+  const quickLinks = [
+    { label: 'Explore Job Openings', path: '/jobs', icon: Search },
+    { label: 'Profile & Resume Settings', path: '/settings', icon: Settings },
+    ...(isRecruiter ? [{ label: 'Recruiter ATS & Kanban', path: '/recruiter/dashboard', icon: Layers }] : []),
+    ...(isCandidate ? [{ label: 'My Job Applications', path: '/my-applications', icon: FileText }] : []),
+    ...(isAdmin ? [{ label: 'Admin Management Console', path: '/admin/dashboard', icon: Shield }] : []),
+  ];
+
+  const filteredLinks = quickLinks.filter((link) =>
+    link.label.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen flex app-bg">
+    <div className="min-h-screen flex bg-surface-muted dark:bg-surface-dark-muted text-ink-800 dark:text-ink-100 antialiased font-sans">
       
-      {/* Desktop Sidebar */}
-      <motion.aside
-        animate={{ width: collapsed ? 80 : 260 }}
-        transition={{ duration: 0.25, ease: 'easeInOut' }}
-        className="hidden md:flex flex-col border-r border-slate-200 dark:border-slate-800 bg-white/90 dark:bg-slate-900/90 backdrop-blur-xl sticky top-0 h-screen z-30 shrink-0"
-      >
-        {/* Sidebar Header */}
-        <div className="h-16 px-4 flex items-center justify-between border-b border-slate-800">
-          <Link to="/" className="flex items-center gap-2 overflow-hidden">
-            <div className="w-9 h-9 rounded-xl gradient-bg-primary flex items-center justify-center shrink-0 shadow-md shadow-indigo-500/20">
-              <Briefcase className="w-5 h-5 text-white" />
-            </div>
-            {!collapsed && (
-              <span className="font-extrabold text-lg text-white tracking-tight truncate">
-                Talent<span className="gradient-text">Pulse</span>
-              </span>
-            )}
-          </Link>
+      {/* Desktop Collapsible Sidebar */}
+      <Sidebar
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed(!collapsed)}
+        onLogout={handleLogout}
+      />
 
-          <button
-            onClick={() => setCollapsed(!collapsed)}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-indigo-500 focus:outline-none"
-          >
-            {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-          </button>
-        </div>
-
-        {/* User Mini Info */}
-        {!collapsed && (
-          <div className="p-4 border-b border-slate-800/80 bg-slate-900/40">
-            <div className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-extrabold text-sm shadow">
-                {user?.name?.charAt(0) || 'U'}
-              </div>
-              <div className="overflow-hidden">
-                <p className="text-xs font-bold text-slate-100 truncate">{user?.name}</p>
-                <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
-                  {user?.role}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Nav Links */}
-        <nav className="flex-1 p-3 space-y-1.5 overflow-y-auto custom-scrollbar">
-          {isAdmin && (
-            <>
-              <p className={`text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 py-1 ${collapsed ? 'text-center' : ''}`}>
-                {collapsed ? '•••' : 'Administration'}
-              </p>
-              <Link
-                to="/admin/dashboard"
-                className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-xl text-xs font-semibold transition-all ${
-                  location.pathname === '/admin/dashboard'
-                    ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
-              >
-                <Shield className="w-4 h-4 shrink-0 text-indigo-400" />
-                {!collapsed && <span>Admin Console</span>}
-              </Link>
-            </>
-          )}
-
-          {isRecruiter && (
-            <>
-              <p className={`text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 py-1 ${collapsed ? 'text-center' : ''}`}>
-                {collapsed ? '•••' : 'Management'}
-              </p>
-
-              <Link
-                to="/recruiter/dashboard"
-                className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-xl text-xs font-semibold transition-all ${
-                  location.pathname === '/recruiter/dashboard'
-                    ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
-              >
-                <Layers className="w-4 h-4 shrink-0 text-indigo-400" />
-                {!collapsed && <span>Recruiter Portal & ATS</span>}
-              </Link>
-            </>
-          )}
-
-          {isCandidate && (
-            <>
-              <p className={`text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 py-1 ${collapsed ? 'text-center' : ''}`}>
-                {collapsed ? '•••' : 'Workspace'}
-              </p>
-
-              <Link
-                to="/my-applications"
-                className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-xl text-xs font-semibold transition-all ${
-                  location.pathname === '/my-applications'
-                    ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
-              >
-                <FileText className="w-4 h-4 shrink-0 text-indigo-400" />
-                {!collapsed && <span>My Applications</span>}
-              </Link>
-
-              <Link
-                to="/saved-jobs"
-                className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-xl text-xs font-semibold transition-all ${
-                  location.pathname === '/saved-jobs'
-                    ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shadow-sm'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-                }`}
-              >
-                <Bookmark className="w-4 h-4 shrink-0 text-indigo-400" />
-                {!collapsed && <span>Saved Vacancies</span>}
-              </Link>
-            </>
-          )}
-
-          <p className={`text-[10px] font-bold uppercase tracking-wider text-slate-500 px-3 py-1 ${collapsed ? 'text-center' : ''}`}>
-            {collapsed ? '•••' : 'Discovery & Settings'}
-          </p>
-
-          <Link
-            to="/jobs"
-            className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-xl text-xs font-semibold transition-all ${
-              location.pathname === '/jobs'
-                ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-            }`}
-          >
-            <Briefcase className="w-4 h-4 shrink-0 text-indigo-400" />
-            {!collapsed && <span>Public Job Feed</span>}
-          </Link>
-
-          <Link
-            to="/settings"
-            className={`flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-xl text-xs font-semibold transition-all ${
-              location.pathname === '/settings'
-                ? 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30 shadow-sm'
-                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
-            }`}
-          >
-            <Settings className="w-4 h-4 shrink-0 text-indigo-400" />
-            {!collapsed && <span>Profile Settings</span>}
-          </Link>
-        </nav>
-
-        {/* Logout bottom CTA */}
-        <div className="p-3 border-t border-slate-800">
-          <button
-            onClick={handleLogout}
-            aria-label="Sign out"
-            className="w-full flex items-center gap-3 px-3 py-2.5 min-h-[44px] rounded-xl text-xs font-semibold text-rose-400 hover:bg-rose-500/10 transition-colors focus:ring-2 focus:ring-rose-500 focus:outline-none"
-          >
-            <LogOut className="w-4 h-4 shrink-0" />
-            {!collapsed && <span>Sign Out</span>}
-          </button>
-        </div>
-      </motion.aside>
-
-      {/* Mobile Drawer Navigation (Slide-in) */}
-      <AnimatePresence>
-        {mobileDrawerOpen && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={closeMobileDrawer}
-              className="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-40 md:hidden"
-            />
-            {/* Drawer */}
-            <motion.aside
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-              className="fixed inset-y-0 left-0 w-72 bg-slate-900 border-r border-slate-800 z-50 p-4 flex flex-col justify-between shadow-2xl md:hidden"
-            >
-              <div className="space-y-4">
-                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                  <Link to="/" onClick={closeMobileDrawer} className="flex items-center gap-2">
-                    <div className="w-9 h-9 rounded-xl gradient-bg-primary flex items-center justify-center shrink-0 shadow">
-                      <Briefcase className="w-5 h-5 text-white" />
-                    </div>
-                    <span className="font-extrabold text-lg text-white">
-                      Talent<span className="gradient-text">Pulse</span>
-                    </span>
-                  </Link>
-                  <button
-                    onClick={closeMobileDrawer}
-                    aria-label="Close navigation drawer"
-                    className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
-
-                {/* Mobile User Card */}
-                <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-800/60 border border-slate-700/50">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-sm">
-                    {user?.name?.charAt(0) || 'U'}
+      {/* Mobile Navigation Drawer */}
+      {mobileDrawerOpen && (
+        <div className="fixed inset-0 z-50 flex md:hidden">
+          <div 
+            className="fixed inset-0 bg-ink-950/60 backdrop-blur-sm"
+            onClick={closeMobileDrawer}
+          />
+          <aside className="relative w-72 bg-white dark:bg-ink-900 border-r border-ink-100 dark:border-ink-800 p-4 flex flex-col justify-between z-10 shadow-lift animate-fade-up">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between border-b border-ink-100 dark:border-ink-800 pb-3">
+                <Link to="/" onClick={closeMobileDrawer} className="flex items-center gap-2">
+                  <div className="w-9 h-9 rounded-xl bg-brand-gradient flex items-center justify-center shrink-0 shadow-sm">
+                    <Briefcase className="w-5 h-5 text-white" />
                   </div>
-                  <div className="overflow-hidden">
-                    <p className="text-sm font-bold text-slate-100 truncate">{user?.name}</p>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize bg-indigo-500/20 text-indigo-300">
-                      {user?.role}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Nav Links */}
-                <nav className="space-y-1.5 pt-2">
-                  {isAdmin && (
-                    <Link
-                      to="/admin/dashboard"
-                      onClick={closeMobileDrawer}
-                      className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-200 hover:bg-slate-800"
-                    >
-                      <Shield className="w-5 h-5 text-indigo-400" />
-                      Admin Console
-                    </Link>
-                  )}
-
-                  {isRecruiter && (
-                    <Link
-                      to="/recruiter/dashboard"
-                      onClick={closeMobileDrawer}
-                      className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-200 hover:bg-slate-800"
-                    >
-                      <Layers className="w-5 h-5 text-indigo-400" />
-                      Recruiter Portal & ATS
-                    </Link>
-                  )}
-
-                  {isCandidate && (
-                    <>
-                      <Link
-                        to="/my-applications"
-                        onClick={closeMobileDrawer}
-                        className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-200 hover:bg-slate-800"
-                      >
-                        <FileText className="w-5 h-5 text-indigo-400" />
-                        My Applications
-                      </Link>
-                      <Link
-                        to="/saved-jobs"
-                        onClick={closeMobileDrawer}
-                        className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-200 hover:bg-slate-800"
-                      >
-                        <Bookmark className="w-5 h-5 text-indigo-400" />
-                        Saved Vacancies
-                      </Link>
-                    </>
-                  )}
-
-                  <Link
-                    to="/jobs"
-                    onClick={closeMobileDrawer}
-                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-200 hover:bg-slate-800"
-                  >
-                    <Briefcase className="w-5 h-5 text-indigo-400" />
-                    Public Job Feed
-                  </Link>
-
-                  <Link
-                    to="/settings"
-                    onClick={closeMobileDrawer}
-                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-slate-200 hover:bg-slate-800"
-                  >
-                    <Settings className="w-5 h-5 text-indigo-400" />
-                    Profile Settings
-                  </Link>
-                </nav>
-              </div>
-
-              <div className="pt-4 border-t border-slate-800">
+                  <span className="font-extrabold text-lg text-ink-900 dark:text-white font-display">
+                    Talent<span className="text-brand-600 dark:text-brand-300">Pulse</span>
+                  </span>
+                </Link>
                 <button
-                  onClick={() => {
-                    closeMobileDrawer();
-                    handleLogout();
-                  }}
-                  className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm text-rose-400 bg-rose-500/10 hover:bg-rose-500/20"
+                  onClick={closeMobileDrawer}
+                  aria-label="Close navigation drawer"
+                  type="button"
+                  className="p-2 rounded-xl text-ink-400 hover:text-ink-700 dark:hover:text-ink-200"
                 >
-                  <LogOut className="w-5 h-5" />
-                  Sign Out
+                  <X className="w-5 h-5" />
                 </button>
               </div>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
 
-      {/* Main Right Content Area */}
+              {/* Mobile User Card */}
+              <div className="flex items-center gap-3 p-3 rounded-xl bg-surface-muted dark:bg-surface-dark-muted border border-ink-100 dark:border-ink-800">
+                <Avatar name={user?.name} size="sm" />
+                <div className="overflow-hidden">
+                  <p className="text-sm font-bold text-ink-900 dark:text-white truncate">{user?.name}</p>
+                  <span className="text-2xs text-brand-600 dark:text-brand-300 font-semibold capitalize">
+                    {user?.role}
+                  </span>
+                </div>
+              </div>
+
+              {/* Drawer Links */}
+              <nav className="space-y-1 pt-2">
+                {quickLinks.map((link) => (
+                  <Link
+                    key={link.path}
+                    to={link.path}
+                    onClick={closeMobileDrawer}
+                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-semibold text-ink-700 dark:text-ink-200 hover:bg-ink-100 dark:hover:bg-ink-800 min-h-[44px]"
+                  >
+                    <link.icon className="w-5 h-5 text-brand-600 dark:text-brand-300" />
+                    <span>{link.label}</span>
+                  </Link>
+                ))}
+              </nav>
+            </div>
+
+            <div className="pt-4 border-t border-ink-100 dark:border-ink-800">
+              <button
+                onClick={() => {
+                  closeMobileDrawer();
+                  handleLogout();
+                }}
+                type="button"
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl font-bold text-sm text-status-rejected bg-status-rejected/10 hover:bg-status-rejected/20 min-h-[44px]"
+              >
+                <LogOut className="w-5 h-5" />
+                Sign Out
+              </button>
+            </div>
+          </aside>
+        </div>
+      )}
+
+      {/* Main Right Area */}
       <div className="flex-1 flex flex-col min-w-0">
         
         {/* Top Header Bar */}
-        <header className="h-16 sticky top-0 z-20 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-950/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between">
+        <header className="h-16 sticky top-0 z-20 border-b border-ink-100 dark:border-ink-800 bg-white/90 dark:bg-ink-900/90 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between">
           
           <div className="flex items-center gap-3">
-            {/* Hamburger Trigger for Mobile */}
             <button
               onClick={() => setMobileDrawerOpen(true)}
               aria-label="Open mobile navigation"
-              className="md:hidden p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              type="button"
+              className="md:hidden p-2 rounded-xl text-ink-600 dark:text-ink-300 hover:bg-ink-100 dark:hover:bg-ink-800 border border-ink-200 dark:border-ink-700 min-h-[44px] min-w-[44px] flex items-center justify-center"
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5" />
             </button>
 
             {/* Breadcrumbs */}
-            <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-slate-500 dark:text-slate-400 overflow-hidden">
-              <Link to="/" className="hover:text-slate-900 dark:hover:text-slate-200 flex items-center gap-1 shrink-0">
-                <Home className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
+            <div className="flex items-center gap-1.5 sm:gap-2 text-xs font-medium text-ink-500 dark:text-ink-400 overflow-hidden">
+              <Link to="/" className="hover:text-ink-900 dark:hover:text-white flex items-center gap-1 shrink-0">
+                <Home className="w-3.5 h-3.5 text-brand-600 dark:text-brand-300" />
                 <span className="hidden sm:inline">Home</span>
               </Link>
-              <BreadcrumbSeparator className="w-3.5 h-3.5 text-slate-400 dark:text-slate-600 shrink-0" />
-              <span className="font-bold text-slate-800 dark:text-slate-200 truncate">{getBreadcrumbTitle()}</span>
+              <BreadcrumbSeparator className="w-3.5 h-3.5 text-ink-300 dark:text-ink-600 shrink-0" />
+              <span className="font-bold text-ink-900 dark:text-white truncate">{getBreadcrumbTitle()}</span>
             </div>
           </div>
-          {/* User Profile Dropdown & Theme Toggle */}
-          <div className="flex items-center gap-2 sm:gap-4">
+
+          {/* Center Command Palette Quick Search Button */}
+          <button
+            onClick={() => setCommandPaletteOpen(true)}
+            type="button"
+            className="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-ink-200 dark:border-ink-700 bg-surface-muted dark:bg-surface-dark-muted text-ink-400 hover:text-ink-600 dark:hover:text-ink-200 transition-colors text-xs font-medium"
+          >
+            <Search className="w-3.5 h-3.5 text-ink-400" />
+            <span>Search platform...</span>
+            <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-2xs font-mono rounded bg-white dark:bg-ink-800 border border-ink-200 dark:border-ink-700 text-ink-500 dark:text-ink-400 shadow-2xs">
+              <Command className="w-2.5 h-2.5" /> K
+            </kbd>
+          </button>
+
+          {/* User Profile Dropdown, Notifications Bell & Theme Toggle */}
+          <div className="flex items-center gap-3">
+            {/* Notification bell */}
+            <button
+              type="button"
+              onClick={() => alert("No unread notifications.")}
+              aria-label="Notifications"
+              className="relative p-2 rounded-xl text-ink-500 hover:text-ink-900 dark:text-ink-400 dark:hover:text-white hover:bg-ink-100 dark:hover:bg-ink-800 transition-colors min-h-[44px] min-w-[44px] flex items-center justify-center"
+            >
+              <Bell className="w-5 h-5" />
+              <span className="absolute top-2.5 right-2.5 w-2 h-2 rounded-full bg-status-shortlisted ring-2 ring-white dark:ring-ink-900" />
+            </button>
+
             <ThemeToggle />
-            <div className="relative">
-              <button
-                onClick={() => setUserMenuOpen(!userMenuOpen)}
-                aria-label="User account menu"
-                className="flex items-center gap-2 sm:gap-3 px-3 py-1.5 rounded-full glass-panel hover:border-slate-300 dark:hover:border-slate-700 transition-all focus:outline-none focus:ring-2 focus:ring-blue-500 min-h-[44px]"
-              >
-                <div className="w-7 h-7 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                  {user?.name?.charAt(0) || 'U'}
-                </div>
-                <span className="text-xs font-bold text-slate-800 dark:text-slate-200 hidden sm:inline truncate max-w-[120px]">{user?.name}</span>
-              </button>
 
-              <AnimatePresence>
-                {userMenuOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    onMouseLeave={() => setUserMenuOpen(false)}
-                    className="absolute right-0 mt-2 w-52 rounded-2xl glass-panel bg-slate-900 shadow-2xl border border-slate-800 py-2 z-50"
-                  >
-                    <div className="px-4 py-2 border-b border-slate-800">
-                      <p className="text-[11px] text-slate-400">Signed in as</p>
-                      <p className="text-xs font-bold text-indigo-400 capitalize truncate">{user?.name}</p>
-                    </div>
+            {/* Profile Dropdown */}
+            <Dropdown
+              trigger={
+                <button
+                  type="button"
+                  aria-label="User account menu"
+                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-full border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 hover:bg-ink-100 dark:hover:bg-ink-800 transition-all focus-visible:shadow-focus min-h-[44px] cursor-pointer shadow-sm"
+                >
+                  <Avatar name={user?.name} size="xs" />
+                  <span className="text-xs font-bold text-ink-900 dark:text-white hidden sm:inline truncate max-w-[120px]">
+                    {user?.name}
+                  </span>
+                </button>
+              }
+            >
+              <div className="px-4 py-2 border-b border-ink-100 dark:border-ink-800">
+                <p className="text-2xs font-semibold text-ink-400 uppercase tracking-wider">Signed in as</p>
+                <p className="text-xs font-bold text-ink-900 dark:text-white truncate">{user?.name}</p>
+                <p className="text-2xs text-brand-600 dark:text-brand-300 capitalize font-medium">{user?.role}</p>
+              </div>
 
-                    <Link
-                      to="/settings"
-                      onClick={() => setUserMenuOpen(false)}
-                      className="w-full text-left px-4 py-2.5 text-xs text-slate-300 hover:bg-slate-800 flex items-center gap-2 font-medium min-h-[44px]"
-                    >
-                      <Settings className="w-4 h-4 text-indigo-400" />
-                      Profile Settings
-                    </Link>
+              <DropdownItem icon={Settings} onClick={() => navigate('/settings')}>
+                Profile Settings
+              </DropdownItem>
 
-                    <button
-                      onClick={handleLogout}
-                      aria-label="Sign out"
-                      className="w-full text-left px-4 py-2.5 text-xs text-rose-400 hover:bg-rose-500/10 flex items-center gap-2 font-medium min-h-[44px]"
-                    >
-                      <LogOut className="w-4 h-4" />
-                      Sign Out
-                    </button>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+              {isAdmin && (
+                <DropdownItem icon={Shield} onClick={() => navigate('/admin/dashboard')}>
+                  Admin Console
+                </DropdownItem>
+              )}
+
+              {isRecruiter && (
+                <DropdownItem icon={Layers} onClick={() => navigate('/recruiter/dashboard')}>
+                  Recruiter ATS
+                </DropdownItem>
+              )}
+
+              {isCandidate && (
+                <>
+                  <DropdownItem icon={FileText} onClick={() => navigate('/my-applications')}>
+                    Tracked Applications
+                  </DropdownItem>
+                  <DropdownItem icon={Bookmark} onClick={() => navigate('/saved-jobs')}>
+                    Saved Vacancies
+                  </DropdownItem>
+                </>
+              )}
+
+              <DropdownDivider />
+              <DropdownItem icon={LogOut} danger onClick={handleLogout}>
+                Sign Out
+              </DropdownItem>
+            </Dropdown>
           </div>
         </header>
 
         {/* Dynamic Page Content */}
-        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto">
+        <main className="flex-1 p-4 sm:p-6 md:p-8 max-w-7xl w-full mx-auto animate-fade-up">
           <Outlet />
         </main>
         
         <Footer />
       </div>
+
+      {/* Command / Search Palette Modal */}
+      <Modal
+        isOpen={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        title="Quick Command & Navigation"
+        subtitle="Type to search pages, portals and tools (Cmd + K)"
+        maxWidth="max-w-lg"
+      >
+        <div className="space-y-4">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3.5 top-3.5 text-ink-400" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Search pages or shortcuts..."
+              className="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-900 dark:text-white focus:outline-none focus:shadow-focus"
+              autoFocus
+            />
+          </div>
+
+          <div className="space-y-1">
+            {filteredLinks.length > 0 ? (
+              filteredLinks.map((link) => (
+                <button
+                  key={link.path}
+                  type="button"
+                  onClick={() => {
+                    setCommandPaletteOpen(false);
+                    navigate(link.path);
+                  }}
+                  className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-left hover:bg-brand-50 dark:hover:bg-brand-950/50 hover:text-brand-600 dark:hover:text-brand-300 transition-colors text-xs font-semibold"
+                >
+                  <div className="flex items-center gap-3">
+                    <link.icon className="w-4 h-4 text-ink-400" />
+                    <span>{link.label}</span>
+                  </div>
+                  <kbd className="text-2xs font-mono text-ink-400">{link.path}</kbd>
+                </button>
+              ))
+            ) : (
+              <p className="text-xs text-center text-ink-400 py-4">No matching navigation links found.</p>
+            )}
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 };
 
+export default DashboardLayout;

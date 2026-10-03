@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { updateUserProfile, changeUserPassword } from '../api/auth.api';
-import { User, Lock, Save, KeyRound, CheckCircle2, AlertCircle, Camera } from 'lucide-react';
+import { User, Lock, Save, KeyRound, CheckCircle2, AlertCircle, Camera, Upload, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { Card, Input, Button, Avatar, Badge } from '../components/ui';
 
 export const ProfileSettingsPage = () => {
   const { user, updateUser } = useAuth();
@@ -21,6 +22,16 @@ export const ProfileSettingsPage = () => {
   const [passwordLoading, setPasswordLoading] = useState(false);
   const [passwordSuccess, setPasswordSuccess] = useState('');
   const [passwordError, setPasswordError] = useState('');
+
+  // Calculate profile completeness score
+  const completenessItems = [
+    Boolean(user?.name),
+    Boolean(user?.email),
+    Boolean(user?.avatar),
+    Boolean(user?.role),
+  ];
+  const completedCount = completenessItems.filter(Boolean).length;
+  const completenessPercent = Math.round((completedCount / completenessItems.length) * 100);
 
   const handleProfileSubmit = async (e) => {
     e.preventDefault();
@@ -79,209 +90,207 @@ export const ProfileSettingsPage = () => {
 
   return (
     <div className="space-y-8 max-w-4xl mx-auto pb-12">
-      {/* Header */}
+      {/* Page Header */}
       <div>
-        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-100">
-          Account <span className="gradient-text">Settings</span>
+        <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-ink-900 dark:text-white font-display">
+          Account Settings & Profile
         </h1>
-        <p className="text-xs sm:text-sm text-slate-400 mt-1">
-          Manage your personal details, avatar image, and security settings.
+        <p className="text-xs sm:text-sm text-ink-500 dark:text-ink-400 mt-1">
+          Manage your personal information, avatar photo, CV documents, and security credentials.
         </p>
       </div>
 
+      {/* Profile Completeness Progress Bar */}
+      <Card className="space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-status-hired" />
+            <span className="text-xs font-bold text-ink-900 dark:text-white font-display">
+              Profile Completeness
+            </span>
+          </div>
+          <span className="text-xs font-extrabold text-brand-600 dark:text-brand-300">
+            {completenessPercent}%
+          </span>
+        </div>
+        <div className="w-full h-2 rounded-full bg-ink-100 dark:bg-ink-800 overflow-hidden">
+          <div
+            className="h-full bg-brand-gradient transition-all duration-300"
+            style={{ width: `${completenessPercent}%` }}
+          />
+        </div>
+      </Card>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         
-        {/* Profile Card */}
-        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-800 space-y-6 bg-slate-900/60">
-          <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-            <div className="w-10 h-10 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 flex items-center justify-center">
+        {/* Profile Details Card */}
+        <Card className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-ink-100 dark:border-ink-800 pb-4">
+            <div className="w-10 h-10 rounded-xl bg-brand-50 dark:bg-brand-950 text-brand-600 dark:text-brand-300 flex items-center justify-center">
               <User className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-100">Profile Information</h3>
-              <p className="text-xs text-slate-400">Update your name and profile picture URL</p>
+              <h3 className="text-base font-bold text-ink-900 dark:text-white font-display">Profile Information</h3>
+              <p className="text-2xs text-ink-500 dark:text-ink-400">Update your name and profile photo URL</p>
             </div>
           </div>
 
-          {/* User Preview */}
-          <div className="flex items-center gap-4 p-4 rounded-2xl bg-slate-800/40 border border-slate-700/50">
-            {avatar ? (
-              <img
-                src={avatar}
-                alt={name}
-                className="w-14 h-14 rounded-2xl object-cover border-2 border-indigo-500/40"
-              />
-            ) : (
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow">
-                {name?.charAt(0) || 'U'}
-              </div>
-            )}
-            <div className="overflow-hidden">
-              <h4 className="text-sm font-bold text-slate-100 truncate">{name || user?.name}</h4>
-              <p className="text-xs text-slate-400 truncate">{user?.email}</p>
-              <span className="inline-block text-[10px] px-2 py-0.5 rounded-full font-semibold capitalize bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 mt-1">
+          {/* Avatar & User Info */}
+          <div className="flex items-center gap-4 p-4 rounded-2xl bg-surface-muted dark:bg-surface-dark-muted border border-ink-100 dark:border-ink-800">
+            <Avatar name={name || user?.name} src={avatar} size="lg" />
+            <div className="overflow-hidden flex-1">
+              <h4 className="text-sm font-bold text-ink-900 dark:text-white truncate">{name || user?.name}</h4>
+              <p className="text-xs text-ink-500 dark:text-ink-400 truncate">{user?.email}</p>
+              <Badge variant="brand" size="sm" className="mt-1 capitalize">
                 {user?.role} Account
-              </span>
+              </Badge>
             </div>
           </div>
 
           {profileError && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-status-rejected/10 border border-status-rejected/20 text-status-rejected text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{profileError}</span>
             </div>
           )}
 
           {profileSuccess && (
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-status-hired/10 border border-status-hired/20 text-status-hired text-xs flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{profileSuccess}</span>
             </div>
           )}
 
           <form onSubmit={handleProfileSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Full Name</label>
-              <input
-                type="text"
-                required
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Alex Morgan"
-                className="w-full px-4 py-2.5 rounded-xl glass-input text-xs min-h-[44px]"
-              />
-            </div>
+            <Input
+              label="Full Name"
+              type="text"
+              required
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Alex Morgan"
+              leftIcon={User}
+            />
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Avatar Image URL</label>
-              <div className="relative">
-                <Camera className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
-                <input
-                  type="url"
-                  value={avatar}
-                  onChange={(e) => setAvatar(e.target.value)}
-                  placeholder="https://images.unsplash.com/photo-..."
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input text-xs min-h-[44px]"
-                />
-              </div>
-            </div>
+            <Input
+              label="Avatar Image URL"
+              type="url"
+              value={avatar}
+              onChange={(e) => setAvatar(e.target.value)}
+              placeholder="https://images.unsplash.com/photo-..."
+              leftIcon={Camera}
+            />
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-400">Email (Read Only)</label>
-              <input
-                type="email"
-                value={user?.email || ''}
-                disabled
-                className="w-full px-4 py-2.5 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-500 text-xs cursor-not-allowed min-h-[44px]"
-              />
-            </div>
+            <Input
+              label="Email Address (Read Only)"
+              type="email"
+              value={user?.email || ''}
+              disabled
+            />
 
-            <button
+            <Button
               type="submit"
-              disabled={profileLoading}
-              className="w-full py-3 px-4 rounded-xl font-bold text-xs text-white gradient-bg-primary shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 transition-all flex items-center justify-center gap-2 min-h-[44px]"
+              variant="primary"
+              isLoading={profileLoading}
+              className="w-full"
+              leftIcon={Save}
             >
-              {profileLoading ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  Save Profile Changes
-                </>
-              )}
-            </button>
+              Save Profile Changes
+            </Button>
           </form>
-        </div>
 
-        {/* Change Password Card */}
-        <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-800 space-y-6 bg-slate-900/60">
-          <div className="flex items-center gap-3 border-b border-slate-800 pb-4">
-            <div className="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20 flex items-center justify-center">
+          {/* CV / Resume Upload Box Placeholder */}
+          <div className="pt-4 border-t border-ink-100 dark:border-ink-800 space-y-2">
+            <label className="text-2xs font-semibold text-ink-700 dark:text-ink-300 tracking-wide uppercase">
+              Curriculum Vitae (CV / Resume)
+            </label>
+            <div
+              onClick={() => alert("CV drag-and-drop placeholder: You can upload your PDF resume when applying for jobs.")}
+              className="p-6 rounded-2xl border-2 border-dashed border-ink-200 dark:border-ink-800 text-center cursor-pointer hover:border-brand-500 hover:bg-brand-50/50 dark:hover:bg-brand-950/30 transition-colors space-y-2"
+            >
+              <Upload className="w-6 h-6 text-brand-600 dark:text-brand-300 mx-auto" />
+              <p className="text-xs font-bold text-ink-900 dark:text-white">Drag & Drop your CV here</p>
+              <p className="text-2xs text-ink-400">PDF or DOCX format (Max 10MB)</p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Change Security Password Card */}
+        <Card className="space-y-6">
+          <div className="flex items-center gap-3 border-b border-ink-100 dark:border-ink-800 pb-4">
+            <div className="w-10 h-10 rounded-xl bg-sun-50 dark:bg-sun-950 text-sun-600 dark:text-sun-300 flex items-center justify-center">
               <KeyRound className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-base font-bold text-slate-100">Security & Password</h3>
-              <p className="text-xs text-slate-400">Update your account password</p>
+              <h3 className="text-base font-bold text-ink-900 dark:text-white font-display">Security & Credentials</h3>
+              <p className="text-2xs text-ink-500 dark:text-ink-400">Update your security password</p>
             </div>
           </div>
 
           {passwordError && (
-            <div className="p-3 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-status-rejected/10 border border-status-rejected/20 text-status-rejected text-xs flex items-center gap-2">
               <AlertCircle className="w-4 h-4 shrink-0" />
               <span>{passwordError}</span>
             </div>
           )}
 
           {passwordSuccess && (
-            <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs flex items-center gap-2">
+            <div className="p-3 rounded-xl bg-status-hired/10 border border-status-hired/20 text-status-hired text-xs flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>{passwordSuccess}</span>
             </div>
           )}
 
           <form onSubmit={handlePasswordSubmit} className="space-y-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Current Password</label>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
-                <input
-                  type="password"
-                  required
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input text-xs min-h-[44px]"
-                />
-              </div>
-            </div>
+            <Input
+              label="Current Password"
+              type="password"
+              required
+              isPasswordToggleable
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Enter current password"
+              leftIcon={Lock}
+            />
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">New Password</label>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input text-xs min-h-[44px]"
-                />
-              </div>
-            </div>
+            <Input
+              label="New Password"
+              type="password"
+              required
+              isPasswordToggleable
+              minLength={6}
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="At least 6 characters"
+              leftIcon={Lock}
+            />
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Confirm New Password</label>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400 pointer-events-none" />
-                <input
-                  type="password"
-                  required
-                  minLength={6}
-                  value={confirmNewPassword}
-                  onChange={(e) => setConfirmNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input text-xs min-h-[44px]"
-                />
-              </div>
-            </div>
+            <Input
+              label="Confirm New Password"
+              type="password"
+              required
+              isPasswordToggleable
+              minLength={6}
+              value={confirmNewPassword}
+              onChange={(e) => setConfirmNewPassword(e.target.value)}
+              placeholder="Repeat new password"
+              leftIcon={Lock}
+            />
 
-            <button
+            <Button
               type="submit"
-              disabled={passwordLoading}
-              className="w-full py-3 px-4 rounded-xl font-bold text-xs text-white gradient-bg-primary shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 transition-all flex items-center justify-center gap-2 min-h-[44px]"
+              variant="primary"
+              isLoading={passwordLoading}
+              className="w-full"
             >
-              {passwordLoading ? (
-                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                'Update Password'
-              )}
-            </button>
+              Update Security Password
+            </Button>
           </form>
-        </div>
+        </Card>
 
       </div>
     </div>
   );
 };
+
+export default ProfileSettingsPage;

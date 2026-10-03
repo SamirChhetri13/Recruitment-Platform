@@ -2,15 +2,16 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Eye, EyeOff, Briefcase, UserCheck, ArrowRight, ShieldCheck, CheckCircle2 } from 'lucide-react';
+import { Mail, Lock, User, Briefcase, UserCheck, ArrowRight, ShieldCheck, CheckCircle2, AlertTriangle, Sparkles } from 'lucide-react';
 import { registerSchema } from '../schemas/authSchemas';
 import { useAuth } from '../context/AuthContext';
+import { Button, Input, Avatar } from '../components/ui';
 
 export const RegisterPage = () => {
   const { register: registerAuth } = useAuth();
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [capsLockOn, setCapsLockOn] = useState(false);
 
   const {
     register,
@@ -32,11 +33,19 @@ export const RegisterPage = () => {
   const selectedRole = watch('role');
   const passwordValue = watch('password');
 
+  const handleKeyDown = (e) => {
+    if (e.getModifierState && e.getModifierState('CapsLock')) {
+      setCapsLockOn(true);
+    } else {
+      setCapsLockOn(false);
+    }
+  };
+
   const getPasswordStrength = (pwd) => {
-    if (!pwd) return { score: 0, label: '', color: 'bg-slate-700' };
-    if (pwd.length < 6) return { score: 1, label: 'Weak', color: 'bg-rose-500' };
-    if (pwd.length < 10) return { score: 2, label: 'Fair', color: 'bg-amber-500' };
-    return { score: 3, label: 'Strong', color: 'bg-emerald-500' };
+    if (!pwd) return { score: 0, label: '', color: 'bg-ink-300' };
+    if (pwd.length < 6) return { score: 1, label: 'Weak', color: 'bg-status-rejected' };
+    if (pwd.length < 10) return { score: 2, label: 'Fair', color: 'bg-status-shortlisted' };
+    return { score: 3, label: 'Strong', color: 'bg-status-hired' };
   };
 
   const strength = getPasswordStrength(passwordValue);
@@ -52,212 +61,206 @@ export const RegisterPage = () => {
         navigate('/jobs');
       }
     } catch (err) {
-      // Axios interceptor handles toast error automatically
+      // Handled by axios interceptor
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center py-6 px-4">
-      <div className="w-full max-w-5xl grid grid-cols-1 md:grid-cols-2 rounded-3xl glass-panel border border-slate-800 bg-slate-900/90 shadow-2xl overflow-hidden min-h-[620px]">
+    <div className="min-h-[calc(100vh-4rem)] flex items-center justify-center py-6 px-2 sm:px-4">
+      <div className="w-full max-w-5xl grid grid-cols-1 lg:grid-cols-12 rounded-3xl bg-white dark:bg-ink-900 border border-ink-100 dark:border-ink-800 shadow-card overflow-hidden min-h-[620px]">
         
-        {/* Left Hero Pane */}
-        <div className="hidden md:flex flex-col justify-between p-10 bg-gradient-to-br from-purple-900/40 via-indigo-900/20 to-slate-900 relative overflow-hidden border-r border-slate-800">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/15 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-indigo-500/15 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="space-y-2 relative z-10">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 rounded-xl gradient-bg-primary flex items-center justify-center shadow-lg shadow-indigo-500/30">
-                <Briefcase className="w-5 h-5 text-white" />
-              </div>
-              <span className="font-extrabold text-xl text-white tracking-tight">
-                Talent<span className="gradient-text">Pulse</span>
-              </span>
-            </div>
-          </div>
-
+        {/* Left Visual Brand Pane - 5 cols */}
+        <div className="hidden lg:flex lg:col-span-5 flex-col justify-between p-10 bg-brand-gradient text-white relative overflow-hidden bg-hero-mesh">
+          <div className="absolute bottom-0 left-0 w-80 h-80 bg-sun-400/10 rounded-full blur-3xl pointer-events-none" />
+          
           <div className="space-y-6 relative z-10">
-            <div className="space-y-2">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/20">
-                Join the Recruitment Network
-              </span>
-              <h2 className="text-3xl font-extrabold text-white leading-tight">
-                Empowering Top Talent & Employers
-              </h2>
-              <p className="text-xs text-slate-400 leading-relaxed">
-                Create your account in seconds to post vacancies, manage applications, or apply for verified remote & on-site positions.
-              </p>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-white/10 backdrop-blur-md border border-white/20">
+              <Sparkles className="w-3.5 h-3.5 text-sun-300" />
+              <span>Join TalentPulse Today</span>
             </div>
 
-            <div className="space-y-3 text-xs text-slate-300">
+            <h2 className="text-3xl font-extrabold font-display leading-tight">
+              Empowering candidates & hiring teams alike.
+            </h2>
+            <p className="text-sm text-brand-100/90 leading-relaxed font-sans">
+              Create an account to post job vacancies, manage candidate pipelines, or apply for verified positions in seconds.
+            </p>
+
+            <div className="space-y-3 pt-2 text-xs font-medium text-brand-100">
               <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Candidate Profile & One-Click CV Applications</span>
+                <CheckCircle2 className="w-4 h-4 text-sun-300 shrink-0" />
+                <span>Candidate Profile & Drag-and-Drop CV upload</span>
               </div>
               <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Recruiter Job Publishing & Multi-Step Wizard</span>
+                <CheckCircle2 className="w-4 h-4 text-sun-300 shrink-0" />
+                <span>Recruiter Vacancy Wizard & Kanban Board</span>
               </div>
               <div className="flex items-center gap-2.5">
-                <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Real-time ATS Pipeline Stage Drag-and-Drop</span>
+                <CheckCircle2 className="w-4 h-4 text-sun-300 shrink-0" />
+                <span>Automated application status tracking</span>
               </div>
             </div>
           </div>
 
-          <div className="glass-panel p-4 rounded-2xl bg-slate-900/80 border border-slate-800 text-xs space-y-1 relative z-10">
-            <p className="text-slate-300 font-bold">Trusted by hiring managers worldwide</p>
-            <p className="text-[11px] text-slate-500">Fast authentication powered by JWT tokens</p>
+          <div className="p-4 rounded-2xl bg-brand-950/40 backdrop-blur-md border border-white/10 text-xs space-y-1 relative z-10">
+            <p className="text-brand-100 font-bold">Enterprise ATS Engine</p>
+            <p className="text-brand-200 text-2xs">Trusted by recruiters & developers worldwide</p>
           </div>
         </div>
 
-        {/* Right Form Pane */}
-        <div className="p-8 sm:p-10 flex flex-col justify-center space-y-5 relative z-10">
-          
+        {/* Right Form Pane - 7 cols */}
+        <div className="lg:col-span-7 p-8 sm:p-12 flex flex-col justify-center space-y-5">
           <div className="space-y-1">
-            <h2 className="text-2xl font-extrabold text-white tracking-tight">Create your account</h2>
-            <p className="text-xs text-slate-400">Select your account type to get started</p>
+            <h1 className="text-2xl font-extrabold text-ink-900 dark:text-white font-display tracking-tight">
+              Create your account
+            </h1>
+            <p className="text-xs text-ink-500 dark:text-ink-400">
+              Select your role to get tailored dashboard tools
+            </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             
-            {/* Role selector */}
+            {/* Account-type cards */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Account Type</label>
-              <div className="grid grid-cols-2 gap-2">
+              <label className="text-xs font-semibold text-ink-700 dark:text-ink-300 tracking-wide uppercase">
+                I want to:
+              </label>
+              <div className="grid grid-cols-2 gap-3">
                 <button
                   type="button"
                   onClick={() => setValue('role', 'candidate')}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border transition-all ${
+                  className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 focus:outline-none focus:shadow-focus cursor-pointer ${
                     selectedRole === 'candidate'
-                      ? 'bg-indigo-500/20 text-indigo-400 border-indigo-500 shadow-sm'
-                      : 'glass-panel text-slate-400 border-slate-800 hover:text-slate-200'
+                      ? 'border-brand-600 bg-brand-50/80 dark:bg-brand-950/50 dark:border-brand-400 ring-1 ring-brand-600'
+                      : 'border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 hover:bg-ink-50 dark:hover:bg-ink-800/50'
                   }`}
                 >
-                  <UserCheck className="w-4 h-4" />
-                  Candidate / Job Seeker
+                  <div className="flex items-center justify-between">
+                    <div className={`p-2 rounded-xl ${selectedRole === 'candidate' ? 'bg-brand-600 text-white' : 'bg-ink-100 dark:bg-ink-800 text-ink-600 dark:text-ink-300'}`}>
+                      <UserCheck className="w-4 h-4" />
+                    </div>
+                    {selectedRole === 'candidate' && (
+                      <CheckCircle2 className="w-4 h-4 text-brand-600 dark:text-brand-300" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-ink-900 dark:text-white">I'm looking for a job</h4>
+                    <p className="text-2xs text-ink-500 dark:text-ink-400 mt-0.5">Explore & apply for vacancies</p>
+                  </div>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => setValue('role', 'recruiter')}
-                  className={`py-2 px-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 border transition-all ${
+                  className={`p-3.5 rounded-2xl border text-left transition-all flex flex-col justify-between gap-2 focus:outline-none focus:shadow-focus cursor-pointer ${
                     selectedRole === 'recruiter'
-                      ? 'bg-purple-500/20 text-purple-400 border-purple-500 shadow-sm'
-                      : 'glass-panel text-slate-400 border-slate-800 hover:text-slate-200'
+                      ? 'border-sun-500 bg-sun-50/80 dark:bg-sun-950/50 dark:border-sun-400 ring-1 ring-sun-500'
+                      : 'border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 hover:bg-ink-50 dark:hover:bg-ink-800/50'
                   }`}
                 >
-                  <Briefcase className="w-4 h-4" />
-                  Recruiter / Employer
+                  <div className="flex items-center justify-between">
+                    <div className={`p-2 rounded-xl ${selectedRole === 'recruiter' ? 'bg-sun-500 text-white' : 'bg-ink-100 dark:bg-ink-800 text-ink-600 dark:text-ink-300'}`}>
+                      <Briefcase className="w-4 h-4" />
+                    </div>
+                    {selectedRole === 'recruiter' && (
+                      <CheckCircle2 className="w-4 h-4 text-sun-500 dark:text-sun-300" />
+                    )}
+                  </div>
+                  <div>
+                    <h4 className="text-xs font-bold text-ink-900 dark:text-white">I'm hiring candidates</h4>
+                    <p className="text-2xs text-ink-500 dark:text-ink-400 mt-0.5">Post jobs & manage Kanban ATS</p>
+                  </div>
                 </button>
               </div>
             </div>
 
             {/* Full Name */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-300">Full Name</label>
-              <div className="relative">
-                <User className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 pointer-events-none" />
-                <input
-                  {...register('name')}
-                  type="text"
-                  placeholder="Alex Morgan"
-                  className="w-full pl-10 pr-4 py-2 rounded-xl glass-input text-xs"
-                />
-              </div>
-              {errors.name && <p className="text-[11px] text-rose-400">{errors.name.message}</p>}
-            </div>
+            <Input
+              label="Full Name"
+              type="text"
+              placeholder="e.g. Alex Morgan"
+              leftIcon={User}
+              error={errors.name?.message}
+              autoFocus
+              {...register('name')}
+            />
 
-            {/* Email */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-300">Email Address</label>
-              <div className="relative">
-                <Mail className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 pointer-events-none" />
-                <input
-                  {...register('email')}
-                  type="email"
-                  placeholder="alex@company.com"
-                  className="w-full pl-10 pr-4 py-2 rounded-xl glass-input text-xs"
-                />
-              </div>
-              {errors.email && <p className="text-[11px] text-rose-400">{errors.email.message}</p>}
-            </div>
+            {/* Email Address */}
+            <Input
+              label="Email Address"
+              type="email"
+              placeholder="alex@company.com"
+              leftIcon={Mail}
+              error={errors.email?.message}
+              {...register('email')}
+            />
 
             {/* Password */}
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-300">Password</label>
-              <div className="relative">
-                <Lock className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 pointer-events-none" />
-                <input
-                  {...register('password')}
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="At least 6 characters"
-                  className="w-full pl-10 pr-10 py-2 rounded-xl glass-input text-xs"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3 text-slate-400 hover:text-slate-200"
-                >
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-              
-              {/* Strength bar */}
+              <Input
+                label="Password"
+                type="password"
+                placeholder="At least 6 characters"
+                leftIcon={Lock}
+                isPasswordToggleable
+                error={errors.password?.message}
+                onKeyDown={handleKeyDown}
+                {...register('password')}
+              />
+
+              {/* Password strength meter */}
               {passwordValue && (
-                <div className="flex items-center gap-2 pt-1">
-                  <div className="flex-1 h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                    <div className={`h-full transition-all ${strength.color}`} style={{ width: `${(strength.score / 3) * 100}%` }} />
+                <div className="flex items-center gap-2 pt-1 animate-fade-up">
+                  <div className="flex-1 h-1.5 bg-ink-100 dark:bg-ink-800 rounded-full overflow-hidden">
+                    <div className={`h-full transition-all duration-200 ${strength.color}`} style={{ width: `${(strength.score / 3) * 100}%` }} />
                   </div>
-                  <span className="text-[10px] font-semibold text-slate-400">{strength.label}</span>
+                  <span className="text-2xs font-semibold text-ink-500 dark:text-ink-400">{strength.label}</span>
                 </div>
               )}
-              {errors.password && <p className="text-[11px] text-rose-400">{errors.password.message}</p>}
+
+              {capsLockOn && (
+                <div className="flex items-center gap-1 text-2xs text-sun-600 dark:text-sun-400 font-semibold mt-1">
+                  <AlertTriangle className="w-3 h-3" />
+                  <span>Caps Lock is ON</span>
+                </div>
+              )}
             </div>
 
             {/* Confirm Password */}
-            <div className="space-y-1">
-              <label className="text-xs font-semibold text-slate-300">Confirm Password</label>
-              <div className="relative">
-                <ShieldCheck className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 pointer-events-none" />
-                <input
-                  {...register('confirmPassword')}
-                  type="password"
-                  placeholder="Repeat password"
-                  className="w-full pl-10 pr-4 py-2 rounded-xl glass-input text-xs"
-                />
-              </div>
-              {errors.confirmPassword && <p className="text-[11px] text-rose-400">{errors.confirmPassword.message}</p>}
-            </div>
+            <Input
+              label="Confirm Password"
+              type="password"
+              placeholder="Repeat password"
+              leftIcon={ShieldCheck}
+              error={errors.confirmPassword?.message}
+              {...register('confirmPassword')}
+            />
 
-            {/* Submit */}
-            <button
+            {/* Register CTA */}
+            <Button
               type="submit"
-              disabled={loading}
-              className="w-full py-3 px-4 rounded-xl font-bold text-sm text-white gradient-bg-primary shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 hover:scale-[1.01] active:scale-[0.99] disabled:opacity-50 transition-all flex items-center justify-center gap-2 mt-2"
+              variant="accent"
+              isLoading={loading}
+              className="w-full mt-2"
+              rightIcon={ArrowRight}
             >
-              {loading ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  Register Account
-                  <ArrowRight className="w-4 h-4" />
-                </>
-              )}
-            </button>
+              Create Account
+            </Button>
           </form>
 
-          <div className="text-center text-xs text-slate-400 pt-1">
+          <p className="text-center text-xs text-ink-500 dark:text-ink-400 pt-1 border-t border-ink-100 dark:border-ink-800">
             Already registered?{' '}
-            <Link to="/login" className="font-bold text-indigo-400 hover:text-indigo-300">
+            <Link to="/login" className="font-bold text-brand-600 dark:text-brand-400 hover:underline">
               Sign in instead
             </Link>
-          </div>
-
+          </p>
         </div>
       </div>
     </div>
   );
 };
+
+export default RegisterPage;

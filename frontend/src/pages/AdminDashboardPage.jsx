@@ -104,25 +104,25 @@ export const AdminDashboardPage = () => {
       </Helmet>
 
       {/* Header Banner */}
-      <div className="glass-panel p-8 rounded-3xl border border-slate-800 bg-slate-900/80 flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="glass-panel p-8 rounded-3xl border border-[var(--border)] bg-[var(--surface)] flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold text-white tracking-tight flex items-center gap-2">
-            <Shield className="w-6 h-6 text-indigo-400" />
+          <h1 className="text-2xl font-extrabold text-[var(--text)] tracking-tight flex items-center gap-2">
+            <Shield className="w-6 h-6 text-[var(--primary)]" />
             Admin Moderation Console
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
+          <p className="text-xs text-[var(--text-subtle)] mt-1">
             Platform governance, user account status controls, and job vacancy moderation.
           </p>
         </div>
 
         {/* Tab Controls */}
-        <div className="flex items-center gap-2 bg-slate-800/80 p-1.5 rounded-2xl border border-slate-700/60 shrink-0">
+        <div className="flex items-center gap-2 bg-[var(--surface)] p-1.5 rounded-2xl border border-[var(--border)] shrink-0">
           <button
             onClick={() => setActiveTab('users')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 min-h-[44px] ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
               activeTab === 'users'
-                ? 'bg-indigo-500 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'gradient-bg-primary text-white shadow-md'
+                : 'text-[var(--text-subtle)] hover:text-[var(--text)]'
             }`}
           >
             <Users className="w-4 h-4" />
@@ -130,10 +130,10 @@ export const AdminDashboardPage = () => {
           </button>
           <button
             onClick={() => setActiveTab('jobs')}
-            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 min-h-[44px] ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
               activeTab === 'jobs'
-                ? 'bg-indigo-500 text-white shadow-md'
-                : 'text-slate-400 hover:text-slate-200'
+                ? 'gradient-bg-primary text-white shadow-md'
+                : 'text-[var(--text-subtle)] hover:text-[var(--text)]'
             }`}
           >
             <Briefcase className="w-4 h-4" />
@@ -147,30 +147,30 @@ export const AdminDashboardPage = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 pointer-events-none" />
+              <Search className="w-4 h-4 absolute left-3.5 top-3 text-[var(--text-subtle)] pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search users by name or email..."
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && fetchUsers()}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input text-xs min-h-[44px]"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input text-xs text-[var(--text)] min-h-[44px]"
               />
             </div>
             <button
               onClick={fetchUsers}
-              className="px-3.5 py-2.5 rounded-xl text-xs font-semibold glass-panel hover:bg-slate-800 text-slate-300 flex items-center gap-1.5 min-h-[44px]"
+              className="px-3.5 py-2.5 rounded-xl text-xs font-semibold glass-panel hover:bg-[var(--surface-hover)] text-[var(--text-muted)] flex items-center gap-1.5 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
             >
-              <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
+              <RefreshCw className="w-3.5 h-3.5 text-[var(--primary)]" />
               Refresh
             </button>
           </div>
 
-          <div className="glass-panel rounded-2xl border border-slate-800 overflow-hidden bg-slate-900/60">
+          <div className="glass-panel rounded-2xl border border-[var(--border)] overflow-hidden bg-[var(--surface)]">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800 bg-slate-900/80 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <tr className="border-b border-[var(--border)] bg-[var(--surface)] text-[11px] font-bold uppercase tracking-wider text-[var(--text-subtle)]">
                     <th className="py-3.5 px-4">User</th>
                     <th className="py-3.5 px-4">Role</th>
                     <th className="py-3.5 px-4">Status</th>
@@ -178,30 +178,30 @@ export const AdminDashboardPage = () => {
                     <th className="py-3.5 px-4 text-right">Actions</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-xs">
+                <tbody className="divide-y divide-[var(--border)] text-xs text-[var(--text)]">
                   {usersLoading ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-500">
+                      <td colSpan={5} className="py-8 text-center text-[var(--text-subtle)]">
                         Loading users...
                       </td>
                     </tr>
                   ) : users.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-500">
+                      <td colSpan={5} className="py-8 text-center text-[var(--text-subtle)]">
                         No user accounts found
                       </td>
                     </tr>
                   ) : (
                     users.map((u) => (
-                      <tr key={u._id} className="hover:bg-slate-800/40 transition-colors">
+                      <tr key={u._id} className="hover:bg-[var(--surface-hover)] transition-colors">
                         <td className="py-3.5 px-4">
                           <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white font-bold text-xs flex items-center justify-center shrink-0">
                               {u.name?.charAt(0) || 'U'}
                             </div>
                             <div className="overflow-hidden">
-                              <p className="font-bold text-slate-100 truncate">{u.name}</p>
-                              <p className="text-[11px] text-slate-400 truncate">{u.email}</p>
+                              <p className="font-bold text-[var(--text)] truncate">{u.name}</p>
+                              <p className="text-[11px] text-[var(--text-subtle)] truncate">{u.email}</p>
                             </div>
                           </div>
                         </td>
@@ -209,19 +209,19 @@ export const AdminDashboardPage = () => {
                           <select
                             value={u.role}
                             onChange={(e) => handleChangeRole(u, e.target.value)}
-                            className="bg-slate-900 border border-slate-700 text-slate-200 text-[11px] py-1 px-2 rounded-lg cursor-pointer focus:outline-none focus:ring-1 focus:ring-indigo-500 capitalize"
+                            className="bg-[var(--surface)] border border-[var(--border)] text-[var(--text)] text-[11px] py-1 px-2 rounded-lg cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] capitalize"
                           >
-                            <option value="candidate">candidate</option>
-                            <option value="recruiter">recruiter</option>
-                            <option value="admin">admin</option>
+                            <option value="candidate" className="bg-[var(--bg-elevated)] text-[var(--text)]">candidate</option>
+                            <option value="recruiter" className="bg-[var(--bg-elevated)] text-[var(--text)]">recruiter</option>
+                            <option value="admin" className="bg-[var(--bg-elevated)] text-[var(--text)]">admin</option>
                           </select>
                         </td>
                         <td className="py-3.5 px-4">
                           <span
                             className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${
                               u.isActive
-                                ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20'
-                                : 'bg-rose-500/10 text-rose-400 border-rose-500/20'
+                                ? 'bg-[var(--success-bg)] text-[var(--success)] border-[var(--success)]/30'
+                                : 'bg-[var(--danger-bg)] text-[var(--danger)] border-[var(--danger)]/30'
                             }`}
                           >
                             {u.isActive ? (
@@ -235,16 +235,16 @@ export const AdminDashboardPage = () => {
                             )}
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-slate-400 text-[11px]">
+                        <td className="py-3.5 px-4 text-[var(--text-subtle)] text-[11px]">
                           {formatDateAgo(u.createdAt)}
                         </td>
                         <td className="py-3.5 px-4 text-right">
                           <button
                             onClick={() => handleToggleUserActive(u)}
-                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
                               u.isActive
-                                ? 'bg-rose-500/15 text-rose-400 hover:bg-rose-500/25 border border-rose-500/20'
-                                : 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
+                                ? 'bg-[var(--danger-bg)] text-[var(--danger)] hover:opacity-80 border border-[var(--danger)]/30'
+                                : 'bg-[var(--success-bg)] text-[var(--success)] hover:opacity-80 border border-[var(--success)]/30'
                             }`}
                           >
                             {u.isActive ? 'Disable' : 'Enable'}
@@ -265,30 +265,30 @@ export const AdminDashboardPage = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between gap-4">
             <div className="relative flex-1 max-w-md">
-              <Search className="w-4 h-4 absolute left-3.5 top-3 text-slate-400 pointer-events-none" />
+              <Search className="w-4 h-4 absolute left-3.5 top-3 text-[var(--text-subtle)] pointer-events-none" />
               <input
                 type="text"
                 placeholder="Search jobs by title or company..."
                 value={jobSearch}
                 onChange={(e) => setJobSearch(e.target.value)}
                 onKeyDown={(e) => e.key === 'Enter' && fetchJobs()}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input text-xs min-h-[44px]"
+                className="w-full pl-10 pr-4 py-2.5 rounded-xl glass-input text-xs text-[var(--text)] min-h-[44px]"
               />
             </div>
             <button
               onClick={fetchJobs}
-              className="px-3.5 py-2.5 rounded-xl text-xs font-semibold glass-panel hover:bg-slate-800 text-slate-300 flex items-center gap-1.5 min-h-[44px]"
+              className="px-3.5 py-2.5 rounded-xl text-xs font-semibold glass-panel hover:bg-[var(--surface-hover)] text-[var(--text-muted)] flex items-center gap-1.5 min-h-[44px] focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
             >
-              <RefreshCw className="w-3.5 h-3.5 text-indigo-400" />
+              <RefreshCw className="w-3.5 h-3.5 text-[var(--primary)]" />
               Refresh
             </button>
           </div>
 
-          <div className="glass-panel rounded-2xl border border-slate-800 overflow-hidden bg-slate-900/60">
+          <div className="glass-panel rounded-2xl border border-[var(--border)] overflow-hidden bg-[var(--surface)]">
             <div className="overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
-                  <tr className="border-b border-slate-800 bg-slate-900/80 text-[11px] font-bold uppercase tracking-wider text-slate-400">
+                  <tr className="border-b border-[var(--border)] bg-[var(--surface)] text-[11px] font-bold uppercase tracking-wider text-[var(--text-subtle)]">
                     <th className="py-3.5 px-4">Vacancy Title</th>
                     <th className="py-3.5 px-4">Company</th>
                     <th className="py-3.5 px-4">Posted By</th>
@@ -296,25 +296,25 @@ export const AdminDashboardPage = () => {
                     <th className="py-3.5 px-4 text-right">Moderation Action</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/60 text-xs">
+                <tbody className="divide-y divide-[var(--border)] text-xs text-[var(--text)]">
                   {jobsLoading ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-500">
+                      <td colSpan={5} className="py-8 text-center text-[var(--text-subtle)]">
                         Loading vacancies...
                       </td>
                     </tr>
                   ) : jobs.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="py-8 text-center text-slate-500">
+                      <td colSpan={5} className="py-8 text-center text-[var(--text-subtle)]">
                         No job vacancies found
                       </td>
                     </tr>
                   ) : (
                     jobs.map((j) => (
-                      <tr key={j._id} className="hover:bg-slate-800/40 transition-colors">
-                        <td className="py-3.5 px-4 font-bold text-slate-100">{j.title}</td>
-                        <td className="py-3.5 px-4 text-slate-300">{j.company}</td>
-                        <td className="py-3.5 px-4 text-slate-400 text-[11px]">
+                      <tr key={j._id} className="hover:bg-[var(--surface-hover)] transition-colors">
+                        <td className="py-3.5 px-4 font-bold text-[var(--text)]">{j.title}</td>
+                        <td className="py-3.5 px-4 text-[var(--text-muted)]">{j.company}</td>
+                        <td className="py-3.5 px-4 text-[var(--text-subtle)] text-[11px]">
                           {j.postedBy?.name || 'Recruiter'}
                         </td>
                         <td className="py-3.5 px-4">
@@ -325,10 +325,10 @@ export const AdminDashboardPage = () => {
                         <td className="py-3.5 px-4 text-right">
                           <button
                             onClick={() => handleToggleJobStatus(j)}
-                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all ${
+                            className={`px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)] ${
                               j.status === 'open'
-                                ? 'bg-amber-500/15 text-amber-400 hover:bg-amber-500/25 border border-amber-500/20'
-                                : 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25 border border-emerald-500/20'
+                                ? 'bg-[var(--warning-bg)] text-[var(--warning)] hover:opacity-80 border border-[var(--warning)]/30'
+                                : 'bg-[var(--success-bg)] text-[var(--success)] hover:opacity-80 border border-[var(--success)]/30'
                             }`}
                           >
                             {j.status === 'open' ? 'Close Vacancy' : 'Reopen Vacancy'}

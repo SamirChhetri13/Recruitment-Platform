@@ -89,56 +89,56 @@ export const JobFormModal = ({ isOpen, onClose, jobToEdit = null, onSuccess }) =
           {/* Title & Company */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Job Title *</label>
+              <label className="text-xs font-semibold text-[var(--text-muted)]">Job Title *</label>
               <input
                 {...register('title')}
                 placeholder="Senior Full Stack Engineer"
                 className="w-full p-2.5 rounded-xl glass-input text-xs"
               />
-              {errors.title && <p className="text-[11px] text-rose-400 mt-1">{errors.title.message}</p>}
+              {errors.title && <p className="text-[11px] text-[var(--danger)] mt-1">{errors.title.message}</p>}
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Company Name *</label>
+              <label className="text-xs font-semibold text-[var(--text-muted)]">Company Name *</label>
               <input
                 {...register('company')}
                 placeholder="Acme Corp"
                 className="w-full p-2.5 rounded-xl glass-input text-xs"
               />
-              {errors.company && <p className="text-[11px] text-rose-400 mt-1">{errors.company.message}</p>}
+              {errors.company && <p className="text-[11px] text-[var(--danger)] mt-1">{errors.company.message}</p>}
             </div>
           </div>
 
           {/* Location & Job Type & Experience */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Location *</label>
+              <label className="text-xs font-semibold text-[var(--text-muted)]">Location *</label>
               <input
                 {...register('location')}
                 placeholder="Remote / San Francisco, CA"
                 className="w-full p-2.5 rounded-xl glass-input text-xs"
               />
-              {errors.location && <p className="text-[11px] text-rose-400 mt-1">{errors.location.message}</p>}
+              {errors.location && <p className="text-[11px] text-[var(--danger)] mt-1">{errors.location.message}</p>}
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Job Type *</label>
-              <select {...register('jobType')} className="w-full p-2.5 rounded-xl glass-input text-xs bg-slate-900">
-                <option value="full-time">Full Time</option>
-                <option value="part-time">Part Time</option>
-                <option value="contract">Contract</option>
-                <option value="internship">Internship</option>
-                <option value="remote">Remote</option>
+              <label className="text-xs font-semibold text-[var(--text-muted)]">Job Type *</label>
+              <select {...register('jobType')} className="w-full p-2.5 rounded-xl glass-input text-xs bg-[var(--surface)] text-[var(--text)]">
+                <option value="full-time" className="bg-[var(--bg-elevated)] text-[var(--text)]">Full Time</option>
+                <option value="part-time" className="bg-[var(--bg-elevated)] text-[var(--text)]">Part Time</option>
+                <option value="contract" className="bg-[var(--bg-elevated)] text-[var(--text)]">Contract</option>
+                <option value="internship" className="bg-[var(--bg-elevated)] text-[var(--text)]">Internship</option>
+                <option value="remote" className="bg-[var(--bg-elevated)] text-[var(--text)]">Remote</option>
               </select>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Experience Level *</label>
-              <select {...register('experienceLevel')} className="w-full p-2.5 rounded-xl glass-input text-xs bg-slate-900">
-                <option value="entry">Entry Level</option>
-                <option value="mid">Mid Level</option>
-                <option value="senior">Senior Level</option>
-                <option value="lead">Lead / Executive</option>
+              <label className="text-xs font-semibold text-[var(--text-muted)]">Experience Level *</label>
+              <select {...register('experienceLevel')} className="w-full p-2.5 rounded-xl glass-input text-xs bg-[var(--surface)] text-[var(--text)]">
+                <option value="entry" className="bg-[var(--bg-elevated)] text-[var(--text)]">Entry Level</option>
+                <option value="mid" className="bg-[var(--bg-elevated)] text-[var(--text)]">Mid Level</option>
+                <option value="senior" className="bg-[var(--bg-elevated)] text-[var(--text)]">Senior Level</option>
+                <option value="lead" className="bg-[var(--bg-elevated)] text-[var(--text)]">Lead / Executive</option>
               </select>
             </div>
           </div>
@@ -146,7 +146,7 @@ export const JobFormModal = ({ isOpen, onClose, jobToEdit = null, onSuccess }) =
           {/* Salary Min & Max */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Minimum Salary ($/yr)</label>
+              <label className="text-xs font-semibold text-[var(--text-muted)]">Minimum Salary ($/yr)</label>
               <input
                 {...register('salaryMin')}
                 type="number"
@@ -156,7 +156,7 @@ export const JobFormModal = ({ isOpen, onClose, jobToEdit = null, onSuccess }) =
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Maximum Salary ($/yr)</label>
+              <label className="text-xs font-semibold text-[var(--text-muted)]">Maximum Salary ($/yr)</label>
               <input
                 {...register('salaryMax')}
                 type="number"
@@ -168,8 +168,8 @@ export const JobFormModal = ({ isOpen, onClose, jobToEdit = null, onSuccess }) =
 
           {/* Skills (comma separated) */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">
-              Required Skills <span className="text-slate-500 font-normal">(Comma separated)</span>
+            <label className="text-xs font-semibold text-[var(--text-muted)]">
+              Required Skills <span className="text-[var(--text-subtle)] font-normal">(Comma separated)</span>
             </label>
             <input
               {...register('skills')}
@@ -181,39 +181,39 @@ export const JobFormModal = ({ isOpen, onClose, jobToEdit = null, onSuccess }) =
           {/* Job Status (if editing) */}
           {isEditing && (
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-300">Vacancy Status</label>
-              <select {...register('status')} className="w-full p-2.5 rounded-xl glass-input text-xs bg-slate-900">
-                <option value="open">Open (Accepting Applicants)</option>
-                <option value="closed">Closed (Archived)</option>
+              <label className="text-xs font-semibold text-[var(--text-muted)]">Vacancy Status</label>
+              <select {...register('status')} className="w-full p-2.5 rounded-xl glass-input text-xs bg-[var(--surface)] text-[var(--text)]">
+                <option value="open" className="bg-[var(--bg-elevated)] text-[var(--text)]">Open (Accepting Applicants)</option>
+                <option value="closed" className="bg-[var(--bg-elevated)] text-[var(--text)]">Closed (Archived)</option>
               </select>
             </div>
           )}
 
           {/* Description */}
           <div className="space-y-1.5">
-            <label className="text-xs font-semibold text-slate-300">Detailed Description & Requirements *</label>
+            <label className="text-xs font-semibold text-[var(--text-muted)]">Detailed Description & Requirements *</label>
             <textarea
               {...register('description')}
               rows={5}
               placeholder="Outline role responsibilities, team structure, qualifications..."
-              className="w-full p-3 rounded-xl glass-input text-xs"
+              className="w-full p-3 rounded-xl glass-input text-xs text-[var(--text)]"
             />
-            {errors.description && <p className="text-[11px] text-rose-400 mt-1">{errors.description.message}</p>}
+            {errors.description && <p className="text-[11px] text-[var(--danger)] mt-1">{errors.description.message}</p>}
           </div>
 
           {/* Action CTAs */}
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-slate-800">
+          <div className="flex items-center justify-end gap-3 pt-4 border-t border-[var(--border)]">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 glass-panel"
+              className="px-4 py-2 rounded-xl text-xs font-medium text-[var(--text-subtle)] hover:text-[var(--text)] glass-panel focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={loading}
-              className="px-6 py-2.5 rounded-xl text-xs font-bold text-white gradient-bg-primary shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 transition-all flex items-center gap-2"
+              className="px-6 py-2.5 rounded-xl text-xs font-bold text-white gradient-bg-primary shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 transition-all flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ring)]"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

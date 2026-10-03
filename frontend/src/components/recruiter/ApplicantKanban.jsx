@@ -9,11 +9,20 @@ import {
   useSensors,
   DragOverlay,
 } from '@dnd-kit/core';
-import { Eye, FileText, ExternalLink, Calendar, GripVertical } from 'lucide-react';
+import { FileText, Calendar, GripVertical, CheckCircle, RotateCcw } from 'lucide-react';
+import { toast } from 'react-hot-toast';
 import { APPLICATION_STATUSES } from '../../utils/constants';
 import { formatDateAgo } from '../../utils/helpers';
+import { Avatar, Badge } from '../ui';
 
-// Droppable Kanban Column
+const STATUS_TOP_BORDERS = {
+  applied: 'border-t-status-applied',
+  shortlisted: 'border-t-status-shortlisted',
+  hired: 'border-t-status-hired',
+  rejected: 'border-t-status-rejected',
+};
+
+// Droppable Column Component
 const KanbanColumn = ({ column, children, count }) => {
   const { setNodeRef, isOver } = useDroppable({
     id: column.value,
@@ -22,26 +31,32 @@ const KanbanColumn = ({ column, children, count }) => {
   return (
     <div
       ref={setNodeRef}
-      className={`glass-panel p-4 rounded-2xl border transition-colors flex flex-col space-y-3 min-h-[420px] ${
-        isOver
-          ? 'border-indigo-500/80 bg-indigo-500/10 shadow-lg shadow-indigo-500/10'
-          : 'border-slate-800 bg-slate-900/60'
-      }`}
+      className={`
+        bg-white dark:bg-ink-900 
+        border border-ink-100 dark:border-ink-800 
+        border-t-4 ${STATUS_TOP_BORDERS[column.value] || 'border-t-brand-600'}
+        rounded-2xl shadow-card 
+        flex flex-col 
+        min-h-[460px] max-h-[640px] transition-all duration-150
+        ${isOver ? 'bg-brand-50/50 dark:bg-brand-950/40 border-brand-400 ring-2 ring-brand-500/20' : ''}
+      `}
     >
-      {/* Column Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-        <span className={`px-2.5 py-1 rounded-full text-xs font-bold border ${column.color}`}>
-          {column.label}
-        </span>
-        <span className="w-5 h-5 rounded-full bg-slate-800 text-slate-300 font-bold text-[11px] flex items-center justify-center">
+      {/* Sticky Column Header */}
+      <div className="sticky top-0 z-10 px-4 py-3 bg-white/95 dark:bg-ink-900/95 backdrop-blur-sm border-b border-ink-100 dark:border-ink-800 rounded-t-2xl flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Badge variant={column.value} size="md">
+            {column.label}
+          </Badge>
+        </div>
+        <span className="w-5 h-5 rounded-full bg-ink-100 dark:bg-ink-800 text-ink-700 dark:text-ink-300 font-bold text-2xs flex items-center justify-center">
           {count}
         </span>
       </div>
 
-      {/* Cards List */}
-      <div className="space-y-3 flex-1 overflow-y-auto max-h-[550px] pr-1 custom-scrollbar">
+      {/* Cards Scrollable Body */}
+      <div className="p-3 space-y-3 flex-1 overflow-y-auto custom-scrollbar">
         {count === 0 ? (
-          <div className="py-12 text-center text-[11px] text-slate-500 italic border-2 border-dashed border-slate-800/80 rounded-xl">
+          <div className="py-12 text-center text-xs text-ink-400 dark:text-ink-500 italic border-2 border-dashed border-ink-200 dark:border-ink-800 rounded-xl">
             Drop applicants here
           </div>
         ) : (
@@ -52,7 +67,7 @@ const KanbanColumn = ({ column, children, count }) => {
   );
 };
 
-// Draggable Candidate Card Component
+// Draggable Candidate Card
 const DraggableCandidateCard = ({ app, onSelectCandidate, onStatusChange }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: app._id,
@@ -69,21 +84,26 @@ const DraggableCandidateCard = ({ app, onSelectCandidate, onStatusChange }) => {
     <div
       ref={setNodeRef}
       style={style}
-      className={`p-4 rounded-xl glass-panel bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 space-y-3 transition-all cursor-pointer group ${
-        isDragging ? 'opacity-40 border-indigo-500 scale-95 shadow-2xl z-50' : ''
-      }`}
       onClick={() => onSelectCandidate(app)}
+      className={`
+        p-4 rounded-xl 
+        bg-surface-muted dark:bg-surface-dark-muted 
+        hover:bg-white dark:hover:bg-ink-800/80 
+        border border-ink-100 dark:border-ink-800 
+        hover:border-brand-200 dark:hover:border-brand-800/60
+        shadow-2xs hover:shadow-card
+        space-y-3 transition-all duration-150 cursor-pointer group
+        ${isDragging ? 'opacity-30 border-brand-500 scale-95 shadow-lift z-50' : ''}
+      `}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2.5 overflow-hidden">
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow">
-            {app.candidate?.name?.charAt(0) || 'C'}
-          </div>
+          <Avatar name={app.candidate?.name} size="sm" />
           <div className="overflow-hidden">
-            <h5 className="text-xs font-bold text-slate-100 group-hover:text-indigo-400 transition-colors truncate">
+            <h5 className="text-xs font-bold text-ink-900 dark:text-white group-hover:text-brand-600 dark:group-hover:text-brand-300 transition-colors truncate">
               {app.candidate?.name || 'Candidate'}
             </h5>
-            <p className="text-[10px] text-slate-400 truncate">{app.candidate?.email}</p>
+            <p className="text-2xs text-ink-500 dark:text-ink-400 truncate">{app.candidate?.email}</p>
           </div>
         </div>
 
@@ -91,36 +111,36 @@ const DraggableCandidateCard = ({ app, onSelectCandidate, onStatusChange }) => {
         <div
           {...listeners}
           {...attributes}
-          className="p-1 text-slate-500 hover:text-slate-200 cursor-grab active:cursor-grabbing rounded hover:bg-slate-700/50 shrink-0"
+          className="p-1 text-ink-400 hover:text-ink-700 dark:hover:text-ink-200 cursor-grab active:cursor-grabbing rounded-lg hover:bg-ink-100 dark:hover:bg-ink-800 shrink-0"
           title="Drag to reorder status"
           onClick={(e) => e.stopPropagation()}
-          aria-label="Drag applicant card"
+          aria-label="Drag candidate card"
         >
           <GripVertical className="w-4 h-4" />
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-700/50">
-        <span className="flex items-center gap-1">
-          <Calendar className="w-3 h-3 text-slate-500" />
+      <div className="flex items-center justify-between text-2xs text-ink-500 dark:text-ink-400 pt-1 border-t border-ink-100 dark:border-ink-800">
+        <span className="flex items-center gap-1 font-medium">
+          <Calendar className="w-3 h-3 text-ink-400" />
           {formatDateAgo(app.createdAt)}
         </span>
         
         {app.resumeUrl && (
-          <span className="text-indigo-400 flex items-center gap-0.5 font-medium">
+          <span className="text-brand-600 dark:text-brand-300 flex items-center gap-1 font-semibold bg-brand-50 dark:bg-brand-950 px-1.5 py-0.5 rounded-md">
             <FileText className="w-3 h-3" />
-            CV
+            Resume
           </span>
         )}
       </div>
 
-      {/* Accessible Mobile Fallback Dropdown */}
+      {/* Accessible Mobile Fallback Selector */}
       <div className="pt-1" onClick={(e) => e.stopPropagation()}>
         <select
           aria-label="Move applicant status"
           value={app.status}
           onChange={(e) => onStatusChange(app._id, e.target.value)}
-          className="w-full text-[11px] py-1.5 px-2 rounded-lg bg-slate-900 text-slate-300 border border-slate-700 focus:outline-none cursor-pointer focus:ring-1 focus:ring-indigo-500"
+          className="w-full text-2xs py-1 px-2 rounded-lg border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-800 dark:text-ink-100 font-semibold cursor-pointer"
         >
           {APPLICATION_STATUSES.map((st) => (
             <option key={st.value} value={st.value}>
@@ -173,7 +193,29 @@ export const ApplicantKanban = ({ applications, onSelectCandidate, onStatusChang
 
     const app = (applications || []).find((a) => a._id === appId);
     if (app && app.status !== targetStatus) {
+      const previousStatus = app.status;
+      
+      // Perform status change
       onStatusChange(appId, targetStatus);
+
+      // Trigger Toast notification with Undo action
+      toast((t) => (
+        <div className="flex items-center gap-3 text-xs font-semibold text-ink-900 dark:text-white">
+          <CheckCircle className="w-4 h-4 text-status-hired" />
+          <span>Moved <strong>{app.candidate?.name || 'Candidate'}</strong> to {targetStatus}</span>
+          <button
+            onClick={() => {
+              onStatusChange(appId, previousStatus);
+              toast.dismiss(t.id);
+              toast.success(`Reverted back to ${previousStatus}`);
+            }}
+            className="flex items-center gap-1 text-2xs font-bold text-brand-600 dark:text-brand-300 hover:underline ml-auto"
+          >
+            <RotateCcw className="w-3 h-3" />
+            Undo
+          </button>
+        </div>
+      ), { duration: 4000 });
     }
   };
 
@@ -200,16 +242,14 @@ export const ApplicantKanban = ({ applications, onSelectCandidate, onStatusChang
 
       <DragOverlay>
         {activeApp ? (
-          <div className="p-4 rounded-xl glass-panel bg-slate-900 border-2 border-indigo-500 shadow-2xl space-y-3 opacity-95 pointer-events-none w-72">
+          <div className="p-4 rounded-xl bg-white dark:bg-ink-900 border-2 border-brand-500 shadow-lift space-y-3 opacity-95 pointer-events-none w-72">
             <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-indigo-500 to-purple-500 text-white font-bold text-xs flex items-center justify-center shrink-0">
-                {activeApp.candidate?.name?.charAt(0) || 'C'}
-              </div>
+              <Avatar name={activeApp.candidate?.name} size="sm" />
               <div className="overflow-hidden">
-                <h5 className="text-xs font-bold text-slate-100 truncate">
+                <h5 className="text-xs font-bold text-ink-900 dark:text-white truncate">
                   {activeApp.candidate?.name || 'Candidate'}
                 </h5>
-                <p className="text-[10px] text-indigo-400 truncate">{activeApp.candidate?.email}</p>
+                <p className="text-2xs text-brand-600 dark:text-brand-300 truncate">{activeApp.candidate?.email}</p>
               </div>
             </div>
           </div>
@@ -219,3 +259,4 @@ export const ApplicantKanban = ({ applications, onSelectCandidate, onStatusChang
   );
 };
 
+export default ApplicantKanban;

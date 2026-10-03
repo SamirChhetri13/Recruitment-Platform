@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Briefcase, Building2, MapPin, DollarSign, Tag, CheckCircle2, ChevronRight, ChevronLeft, Sparkles, Copy } from 'lucide-react';
-import { Modal } from '../common/Modal';
+import { Briefcase, Building2, MapPin, DollarSign, Tag, CheckCircle2, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react';
+import { Modal } from '../ui/Modal';
+import { Button } from '../ui/Button';
+import { Input } from '../ui/Input';
 import { jobSchema } from '../../schemas/jobSchemas';
 import { createJob, updateJob } from '../../api/jobs.api';
 
@@ -18,7 +20,6 @@ export const JobWizardModal = ({ isOpen, onClose, jobToEdit = null, onSuccess })
     reset,
     setValue,
     trigger,
-    watch,
     formState: { errors },
   } = useForm({
     resolver: zodResolver(jobSchema),
@@ -91,29 +92,30 @@ export const JobWizardModal = ({ isOpen, onClose, jobToEdit = null, onSuccess })
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditing ? 'Edit Job Vacancy Wizard' : 'Create Job Vacancy Wizard'}
+      title={isEditing ? 'Edit Job Vacancy' : 'Post a New Job Vacancy'}
+      subtitle="Follow the step-by-step wizard to publish your opening"
       maxWidth="max-w-2xl"
     >
       <div className="space-y-6">
         
-        {/* Wizard Steps Progress Indicator */}
-        <div className="flex items-center justify-between px-4 py-3 rounded-2xl glass-panel bg-slate-800/40 border border-slate-700/60">
+        {/* Wizard Stepper Progress Bar */}
+        <div className="flex items-center justify-between px-4 py-3 rounded-2xl bg-surface-muted dark:bg-surface-dark-muted border border-ink-100 dark:border-ink-800">
           {[
-            { step: 1, label: 'Job Basics' },
-            { step: 2, label: 'Skills & Info' },
-            { step: 3, label: 'Salary & Publish' },
+            { step: 1, label: '1. Basics' },
+            { step: 2, label: '2. Skills & Details' },
+            { step: 3, label: '3. Salary & Review' },
           ].map((s) => (
             <div key={s.step} className="flex items-center gap-2">
               <div
                 className={`w-7 h-7 rounded-full font-bold text-xs flex items-center justify-center transition-all ${
                   currentStep >= s.step
-                    ? 'gradient-bg-primary text-white shadow'
-                    : 'bg-slate-800 text-slate-500'
+                    ? 'bg-brand-gradient text-white shadow-sm'
+                    : 'bg-ink-100 dark:bg-ink-800 text-ink-400'
                 }`}
               >
                 {currentStep > s.step ? <CheckCircle2 className="w-4 h-4" /> : s.step}
               </div>
-              <span className={`text-xs font-semibold ${currentStep === s.step ? 'text-indigo-400' : 'text-slate-400'}`}>
+              <span className={`text-xs font-semibold ${currentStep === s.step ? 'text-brand-600 dark:text-brand-300' : 'text-ink-400'}`}>
                 {s.label}
               </span>
             </div>
@@ -125,47 +127,45 @@ export const JobWizardModal = ({ isOpen, onClose, jobToEdit = null, onSuccess })
             {currentStep === 1 && (
               <motion.div
                 key="step1"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 15 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                exit={{ opacity: 0, x: -15 }}
                 className="space-y-4"
               >
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Job Title *</label>
-                  <input
-                    {...register('title')}
-                    placeholder="e.g. Senior Frontend Engineer"
-                    className="w-full p-2.5 rounded-xl glass-input text-xs"
+                <Input
+                  label="Job Title *"
+                  placeholder="e.g. Senior Frontend Engineer"
+                  leftIcon={Briefcase}
+                  error={errors.title?.message}
+                  {...register('title')}
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <Input
+                    label="Company Name *"
+                    placeholder="e.g. Acme Corp"
+                    leftIcon={Building2}
+                    error={errors.company?.message}
+                    {...register('company')}
                   />
-                  {errors.title && <p className="text-[11px] text-rose-400">{errors.title.message}</p>}
+                  <Input
+                    label="Location *"
+                    placeholder="e.g. Remote / New York"
+                    leftIcon={MapPin}
+                    error={errors.location?.message}
+                    {...register('location')}
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Company Name *</label>
-                    <input
-                      {...register('company')}
-                      placeholder="e.g. Vercel Inc."
-                      className="w-full p-2.5 rounded-xl glass-input text-xs"
-                    />
-                    {errors.company && <p className="text-[11px] text-rose-400">{errors.company.message}</p>}
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Location *</label>
-                    <input
-                      {...register('location')}
-                      placeholder="e.g. Remote / New York"
-                      className="w-full p-2.5 rounded-xl glass-input text-xs"
-                    />
-                    {errors.location && <p className="text-[11px] text-rose-400">{errors.location.message}</p>}
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Job Type *</label>
-                    <select {...register('jobType')} className="w-full p-2.5 rounded-xl glass-input text-xs bg-slate-900">
+                    <label className="text-xs font-semibold text-ink-700 dark:text-ink-300 tracking-wide uppercase">
+                      Job Type *
+                    </label>
+                    <select
+                      {...register('jobType')}
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-100 focus:outline-none focus:shadow-focus"
+                    >
                       <option value="full-time">Full Time</option>
                       <option value="part-time">Part Time</option>
                       <option value="contract">Contract</option>
@@ -175,8 +175,13 @@ export const JobWizardModal = ({ isOpen, onClose, jobToEdit = null, onSuccess })
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Experience Level *</label>
-                    <select {...register('experienceLevel')} className="w-full p-2.5 rounded-xl glass-input text-xs bg-slate-900">
+                    <label className="text-xs font-semibold text-ink-700 dark:text-ink-300 tracking-wide uppercase">
+                      Experience Level *
+                    </label>
+                    <select
+                      {...register('experienceLevel')}
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-100 focus:outline-none focus:shadow-focus"
+                    >
                       <option value="entry">Entry Level</option>
                       <option value="mid">Mid Level</option>
                       <option value="senior">Senior Level</option>
@@ -190,30 +195,30 @@ export const JobWizardModal = ({ isOpen, onClose, jobToEdit = null, onSuccess })
             {currentStep === 2 && (
               <motion.div
                 key="step2"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 15 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                exit={{ opacity: 0, x: -15 }}
                 className="space-y-4"
               >
-                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Required Skills (Comma separated) *</label>
-                  <input
-                    {...register('skills')}
-                    placeholder="React, TypeScript, Tailwind, Node.js, GraphQL"
-                    className="w-full p-2.5 rounded-xl glass-input text-xs"
-                  />
-                  {errors.skills && <p className="text-[11px] text-rose-400">{errors.skills.message}</p>}
-                </div>
+                <Input
+                  label="Required Skills (Comma separated) *"
+                  placeholder="React, TypeScript, Tailwind, Node.js, GraphQL"
+                  leftIcon={Tag}
+                  error={errors.skills?.message}
+                  {...register('skills')}
+                />
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-300">Detailed Description & Responsibilities *</label>
+                  <label className="text-xs font-semibold text-ink-700 dark:text-ink-300 tracking-wide uppercase">
+                    Detailed Description & Responsibilities *
+                  </label>
                   <textarea
                     {...register('description')}
                     rows={6}
-                    placeholder="Provide clear responsibilities, qualifications, requirements..."
-                    className="w-full p-3 rounded-xl glass-input text-xs"
+                    placeholder="Provide clear responsibilities, qualifications, and requirements..."
+                    className="w-full p-3 text-sm rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-100 focus:outline-none focus:shadow-focus"
                   />
-                  {errors.description && <p className="text-[11px] text-rose-400">{errors.description.message}</p>}
+                  {errors.description && <p className="text-xs text-status-rejected font-medium">{errors.description.message}</p>}
                 </div>
               </motion.div>
             )}
@@ -221,37 +226,37 @@ export const JobWizardModal = ({ isOpen, onClose, jobToEdit = null, onSuccess })
             {currentStep === 3 && (
               <motion.div
                 key="step3"
-                initial={{ opacity: 0, x: 20 }}
+                initial={{ opacity: 0, x: 15 }}
                 animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                exit={{ opacity: 0, x: -15 }}
                 className="space-y-4"
               >
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Minimum Annual Salary ($)</label>
-                    <input
-                      {...register('salaryMin')}
-                      type="number"
-                      placeholder="90000"
-                      className="w-full p-2.5 rounded-xl glass-input text-xs"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Maximum Annual Salary ($)</label>
-                    <input
-                      {...register('salaryMax')}
-                      type="number"
-                      placeholder="140000"
-                      className="w-full p-2.5 rounded-xl glass-input text-xs"
-                    />
-                  </div>
+                  <Input
+                    label="Minimum Annual Salary ($)"
+                    type="number"
+                    placeholder="90000"
+                    leftIcon={DollarSign}
+                    {...register('salaryMin')}
+                  />
+                  <Input
+                    label="Maximum Annual Salary ($)"
+                    type="number"
+                    placeholder="140000"
+                    leftIcon={DollarSign}
+                    {...register('salaryMax')}
+                  />
                 </div>
 
                 {isEditing && (
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-slate-300">Vacancy Status</label>
-                    <select {...register('status')} className="w-full p-2.5 rounded-xl glass-input text-xs bg-slate-900">
+                    <label className="text-xs font-semibold text-ink-700 dark:text-ink-300 tracking-wide uppercase">
+                      Vacancy Status
+                    </label>
+                    <select
+                      {...register('status')}
+                      className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-ink-900 dark:text-ink-100 focus:outline-none focus:shadow-focus"
+                    >
                       <option value="open">Open (Accepting Applications)</option>
                       <option value="closed">Closed (Archived)</option>
                     </select>
@@ -261,50 +266,26 @@ export const JobWizardModal = ({ isOpen, onClose, jobToEdit = null, onSuccess })
             )}
           </AnimatePresence>
 
-          {/* Navigation Controls */}
-          <div className="flex items-center justify-between pt-4 border-t border-slate-800">
+          {/* Stepper Navigation Buttons */}
+          <div className="flex items-center justify-between pt-4 border-t border-ink-100 dark:border-ink-800">
             {currentStep > 1 ? (
-              <button
-                type="button"
-                onClick={handlePrevStep}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 glass-panel hover:bg-slate-800 flex items-center gap-1"
-              >
-                <ChevronLeft className="w-4 h-4" />
+              <Button type="button" variant="secondary" onClick={handlePrevStep} leftIcon={ChevronLeft}>
                 Back
-              </button>
+              </Button>
             ) : (
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 rounded-xl text-xs font-medium text-slate-400 hover:text-slate-200 glass-panel"
-              >
+              <Button type="button" variant="ghost" onClick={onClose}>
                 Cancel
-              </button>
+              </Button>
             )}
 
             {currentStep < 3 ? (
-              <button
-                type="button"
-                onClick={handleNextStep}
-                className="px-5 py-2.5 rounded-xl text-xs font-bold text-white gradient-bg-primary shadow-lg flex items-center gap-1"
-              >
+              <Button type="button" variant="primary" onClick={handleNextStep} rightIcon={ChevronRight}>
                 Continue
-                <ChevronRight className="w-4 h-4" />
-              </button>
+              </Button>
             ) : (
-              <button
-                type="submit"
-                disabled={loading}
-                className="px-6 py-2.5 rounded-xl text-xs font-bold text-white gradient-bg-primary shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40 disabled:opacity-50 transition-all flex items-center gap-2"
-              >
-                {loading ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : isEditing ? (
-                  'Save Vacancy Changes'
-                ) : (
-                  'Publish Vacancy'
-                )}
-              </button>
+              <Button type="submit" variant="primary" isLoading={loading}>
+                {isEditing ? 'Save Changes' : 'Post Job Vacancy'}
+              </Button>
             )}
           </div>
         </form>
@@ -312,3 +293,5 @@ export const JobWizardModal = ({ isOpen, onClose, jobToEdit = null, onSuccess })
     </Modal>
   );
 };
+
+export default JobWizardModal;
