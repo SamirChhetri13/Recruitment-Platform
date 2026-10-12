@@ -6,6 +6,8 @@ const applicationSchema = new mongoose.Schema(
         candidate: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
         resumeUrl: { type: String, required: [true, "Resume URL is required"] },
         coverLetter: { type: String, default: "" },
+        skills: { type: [String], default: [] },
+        experience: { type: String, default: "" },
         status: {
             type: String,
             enum: ["applied", "shortlisted", "rejected", "hired"],

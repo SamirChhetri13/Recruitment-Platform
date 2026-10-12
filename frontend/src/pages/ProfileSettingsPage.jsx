@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { updateUserProfile, changeUserPassword } from '../api/auth.api';
-import { User, Lock, Save, KeyRound, CheckCircle2, AlertCircle, Camera, Upload, FileText } from 'lucide-react';
+import { User, Lock, Save, KeyRound, CheckCircle2, AlertCircle, Camera, Upload, Sparkles } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { Card, Input, Button, Avatar, Badge } from '../components/ui';
 
@@ -11,6 +11,8 @@ export const ProfileSettingsPage = () => {
   // Profile Form State
   const [name, setName] = useState(user?.name || '');
   const [avatar, setAvatar] = useState(user?.avatar || '');
+  const [skills, setSkills] = useState((user?.skills || []).join(', '));
+  const [experience, setExperience] = useState(user?.experience || '');
   const [profileLoading, setProfileLoading] = useState(false);
   const [profileSuccess, setProfileSuccess] = useState('');
   const [profileError, setProfileError] = useState('');
@@ -29,6 +31,8 @@ export const ProfileSettingsPage = () => {
     Boolean(user?.email),
     Boolean(user?.avatar),
     Boolean(user?.role),
+    Boolean((user?.skills || []).length > 0 || skills.trim()),
+    Boolean(user?.experience || experience.trim()),
   ];
   const completedCount = completenessItems.filter(Boolean).length;
   const completenessPercent = Math.round((completedCount / completenessItems.length) * 100);
@@ -40,11 +44,27 @@ export const ProfileSettingsPage = () => {
       setProfileError('');
       setProfileSuccess('');
 
-      const res = await updateUserProfile({ name, avatar });
+      const parsedSkills = skills
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const res = await updateUserProfile({
+        name,
+        avatar,
+        skills: parsedSkills,
+        experience,
+      });
+
       if (res.success) {
-        updateUser({ name, avatar });
+        updateUser({
+          name,
+          avatar,
+          skills: parsedSkills,
+          experience,
+        });
         setProfileSuccess('Profile updated successfully!');
-        toast.success('Profile updated!');
+        toast.success('Profile and skills updated!');
       }
     } catch (err) {
       const msg = err.response?.data?.message || err.message || 'Failed to update profile';
@@ -187,6 +207,29 @@ export const ProfileSettingsPage = () => {
               value={user?.email || ''}
               disabled
             />
+
+            <Input
+              label="Key Skills (comma-separated)"
+              type="text"
+              value={skills}
+              onChange={(e) => setSkills(e.target.value)}
+              placeholder="React, Node.js, TypeScript, Tailwind, MongoDB"
+              leftIcon={Sparkles}
+              helperText="Used to compute candidate match score against job vacancy requirements"
+            />
+
+            <div className="space-y-1.5">
+              <label className="text-2xs font-semibold text-ink-700 dark:text-ink-300 tracking-wide uppercase">
+                Experience Summary & Bio
+              </label>
+              <textarea
+                value={experience}
+                onChange={(e) => setExperience(e.target.value)}
+                rows={2}
+                placeholder="e.g. 3+ years experience building React frontends and Node.js microservices"
+                className="w-full p-3 rounded-xl border border-ink-200 dark:border-ink-700 bg-white dark:bg-ink-900 text-xs text-ink-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-brand-500/20"
+              />
+            </div>
 
             <Button
               type="submit"

@@ -7,6 +7,8 @@ export const applyJobValidation = [
         .notEmpty()
         .withMessage("Resume URL is required"),
     body("coverLetter").optional().trim(),
+    body("skills").optional().isArray().withMessage("Skills must be an array of strings"),
+    body("experience").optional().trim(),
 ];
 
 export const updateApplicationStatusValidation = [

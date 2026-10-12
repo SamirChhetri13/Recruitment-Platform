@@ -9,11 +9,13 @@ import {
   useSensors,
   DragOverlay,
 } from '@dnd-kit/core';
-import { FileText, Calendar, GripVertical, CheckCircle, RotateCcw } from 'lucide-react';
+import { Calendar, GripVertical, CheckCircle, RotateCcw, Eye } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { APPLICATION_STATUSES } from '../../utils/constants';
 import { formatDateAgo } from '../../utils/helpers';
 import { Avatar, Badge } from '../ui';
+import { SkillMatchBadge } from './SkillMatchBadge';
+import { ResumePreviewModal } from './ResumePreviewModal';
 
 const STATUS_TOP_BORDERS = {
   applied: 'border-t-status-applied',
@@ -68,7 +70,7 @@ const KanbanColumn = ({ column, children, count }) => {
 };
 
 // Draggable Candidate Card
-const DraggableCandidateCard = ({ app, onSelectCandidate, onStatusChange }) => {
+const DraggableCandidateCard = ({ app, onSelectCandidate, onStatusChange, onPreviewResume }) => {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: app._id,
     data: { app },
@@ -86,13 +88,13 @@ const DraggableCandidateCard = ({ app, onSelectCandidate, onStatusChange }) => {
       style={style}
       onClick={() => onSelectCandidate(app)}
       className={`
-        p-4 rounded-xl 
+        p-3.5 rounded-xl 
         bg-surface-muted dark:bg-surface-dark-muted 
         hover:bg-white dark:hover:bg-ink-800/80 
         border border-ink-100 dark:border-ink-800 
         hover:border-brand-200 dark:hover:border-brand-800/60
         shadow-2xs hover:shadow-card
-        space-y-3 transition-all duration-150 cursor-pointer group
+        space-y-2.5 transition-all duration-150 cursor-pointer group
         ${isDragging ? 'opacity-30 border-brand-500 scale-95 shadow-lift z-50' : ''}
       `}
     >
@@ -112,7 +114,7 @@ const DraggableCandidateCard = ({ app, onSelectCandidate, onStatusChange }) => {
           {...listeners}
           {...attributes}
           className="p-1 text-ink-400 hover:text-ink-700 dark:hover:text-ink-200 cursor-grab active:cursor-grabbing rounded-lg hover:bg-ink-100 dark:hover:bg-ink-800 shrink-0"
-          title="Drag to reorder status"
+          title="Drag to advance status"
           onClick={(e) => e.stopPropagation()}
           aria-label="Drag candidate card"
         >
@@ -120,22 +122,48 @@ const DraggableCandidateCard = ({ app, onSelectCandidate, onStatusChange }) => {
         </div>
       </div>
 
-      <div className="flex items-center justify-between text-2xs text-ink-500 dark:text-ink-400 pt-1 border-t border-ink-100 dark:border-ink-800">
-        <span className="flex items-center gap-1 font-medium">
+      {/* Skill Match Badge & Experience Row */}
+      <div className="flex items-center justify-between gap-2 pt-0.5">
+        <SkillMatchBadge
+          score={app.matchScore ?? 100}
+          matchedSkills={app.matchedSkills || []}
+          missingSkills={app.missingSkills || []}
+          variant="compact"
+        />
+        {app.candidate?.experience && (
+          <span
+            className="text-[10px] text-ink-400 dark:text-ink-500 truncate max-w-[100px] font-medium"
+            title={app.candidate.experience}
+          >
+            {app.candidate.experience}
+          </span>
+        )}
+      </div>
+
+      <div className="flex items-center justify-between text-2xs text-ink-500 dark:text-ink-400 pt-1.5 border-t border-ink-100 dark:border-ink-800">
+        <span className="flex items-center gap-1 font-medium text-[11px]">
           <Calendar className="w-3 h-3 text-ink-400" />
           {formatDateAgo(app.createdAt)}
         </span>
         
         {app.resumeUrl && (
-          <span className="text-brand-600 dark:text-brand-300 flex items-center gap-1 font-semibold bg-brand-50 dark:bg-brand-950 px-1.5 py-0.5 rounded-md">
-            <FileText className="w-3 h-3" />
-            Resume
-          </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onPreviewResume?.(app);
+            }}
+            title="Preview candidate CV in-app"
+            className="text-brand-600 dark:text-brand-300 hover:text-brand-700 dark:hover:text-brand-200 flex items-center gap-1 font-semibold bg-brand-50 hover:bg-brand-100 dark:bg-brand-950 dark:hover:bg-brand-900 px-2 py-0.5 rounded-md transition-colors"
+          >
+            <Eye className="w-3 h-3" />
+            <span>CV</span>
+          </button>
         )}
       </div>
 
       {/* Accessible Mobile Fallback Selector */}
-      <div className="pt-1" onClick={(e) => e.stopPropagation()}>
+      <div className="pt-0.5" onClick={(e) => e.stopPropagation()}>
         <select
           aria-label="Move applicant status"
           value={app.status}
@@ -155,6 +183,7 @@ const DraggableCandidateCard = ({ app, onSelectCandidate, onStatusChange }) => {
 
 export const ApplicantKanban = ({ applications, onSelectCandidate, onStatusChange }) => {
   const [activeApp, setActiveApp] = useState(null);
+  const [previewResumeApp, setPreviewResumeApp] = useState(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -220,42 +249,54 @@ export const ApplicantKanban = ({ applications, onSelectCandidate, onStatusChang
   };
 
   return (
-    <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {APPLICATION_STATUSES.map((column) => {
-          const columnApps = getApplicationsByStatus(column.value);
+    <>
+      <DndContext sensors={sensors} onDragStart={handleDragStart} onDragEnd={handleDragEnd}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {APPLICATION_STATUSES.map((column) => {
+            const columnApps = getApplicationsByStatus(column.value);
 
-          return (
-            <KanbanColumn key={column.value} column={column} count={columnApps.length}>
-              {columnApps.map((app) => (
-                <DraggableCandidateCard
-                  key={app._id}
-                  app={app}
-                  onSelectCandidate={onSelectCandidate}
-                  onStatusChange={onStatusChange}
-                />
-              ))}
-            </KanbanColumn>
-          );
-        })}
-      </div>
+            return (
+              <KanbanColumn key={column.value} column={column} count={columnApps.length}>
+                {columnApps.map((app) => (
+                  <DraggableCandidateCard
+                    key={app._id}
+                    app={app}
+                    onSelectCandidate={onSelectCandidate}
+                    onStatusChange={onStatusChange}
+                    onPreviewResume={(a) => setPreviewResumeApp(a)}
+                  />
+                ))}
+              </KanbanColumn>
+            );
+          })}
+        </div>
 
-      <DragOverlay>
-        {activeApp ? (
-          <div className="p-4 rounded-xl bg-white dark:bg-ink-900 border-2 border-brand-500 shadow-lift space-y-3 opacity-95 pointer-events-none w-72">
-            <div className="flex items-center gap-2.5">
-              <Avatar name={activeApp.candidate?.name} size="sm" />
-              <div className="overflow-hidden">
-                <h5 className="text-xs font-bold text-ink-900 dark:text-white truncate">
-                  {activeApp.candidate?.name || 'Candidate'}
-                </h5>
-                <p className="text-2xs text-brand-600 dark:text-brand-300 truncate">{activeApp.candidate?.email}</p>
+        <DragOverlay>
+          {activeApp ? (
+            <div className="p-4 rounded-xl bg-white dark:bg-ink-900 border-2 border-brand-500 shadow-lift space-y-3 opacity-95 pointer-events-none w-72">
+              <div className="flex items-center gap-2.5">
+                <Avatar name={activeApp.candidate?.name} size="sm" />
+                <div className="overflow-hidden">
+                  <h5 className="text-xs font-bold text-ink-900 dark:text-white truncate">
+                    {activeApp.candidate?.name || 'Candidate'}
+                  </h5>
+                  <p className="text-2xs text-brand-600 dark:text-brand-300 truncate">{activeApp.candidate?.email}</p>
+                </div>
               </div>
             </div>
-          </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
+
+      {/* In-App Resume Preview Modal */}
+      <ResumePreviewModal
+        isOpen={Boolean(previewResumeApp)}
+        onClose={() => setPreviewResumeApp(null)}
+        resumeUrl={previewResumeApp?.resumeUrl}
+        candidateName={previewResumeApp?.candidate?.name}
+        candidateEmail={previewResumeApp?.candidate?.email}
+      />
+    </>
   );
 };
 

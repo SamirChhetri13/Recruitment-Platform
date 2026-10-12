@@ -45,6 +45,8 @@ export const resetPasswordValidation = [
 export const updateProfileValidation = [
     body("name").optional().trim().notEmpty().withMessage("Name cannot be empty"),
     body("avatar").optional().trim(),
+    body("skills").optional().isArray().withMessage("Skills must be an array"),
+    body("experience").optional().trim(),
 ];
 
 export const changePasswordValidation = [

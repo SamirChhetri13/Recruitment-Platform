@@ -32,6 +32,8 @@ const sendTokenResponse = (user, statusCode, res, message) => {
         email: user.email,
         role: user.role,
         avatar: user.avatar || "",
+        skills: user.skills || [],
+        experience: user.experience || "",
       },
       token,
     },
@@ -185,7 +187,7 @@ export const resetPassword = async (req, res, next) => {
 // Update Profile
 export const updateProfile = async (req, res, next) => {
   try {
-    const { name, avatar } = req.body;
+    const { name, avatar, skills, experience } = req.body;
     const user = await User.findById(req.user._id);
 
     if (!user) {
@@ -194,13 +196,25 @@ export const updateProfile = async (req, res, next) => {
 
     if (name) user.name = name;
     if (avatar !== undefined) user.avatar = avatar;
+    if (skills !== undefined) user.skills = Array.isArray(skills) ? skills : [];
+    if (experience !== undefined) user.experience = experience;
 
     await user.save();
 
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      data: { user: { id: user._id, name: user.name, email: user.email, role: user.role, avatar: user.avatar } },
+      data: {
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+          avatar: user.avatar,
+          skills: user.skills,
+          experience: user.experience,
+        },
+      },
     });
   } catch (error) {
     next(error);
